@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análisis Estadístico Avanzado · HumAIno</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c8a96e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HIA Stats">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.9.6/jstat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#07070d;--surface:#0e0e1a;--surface2:#16162a;--border:#2a2a45;
+  --gold:#c8a96e;--gold-dim:#8a6f3e;--cyan:#4fc3c8;
+  --text:#dde0f0;--muted:#666880;--success:#5dba8a;--warn:#e6854a;
+  --ff-h:'Cormorant Garamond',Georgia,serif;--ff-u:'Syne',sans-serif;--ff-m:'JetBrains Mono',monospace;
+  --r:10px;--hbg:rgba(7,7,13,.85);--cg:rgba(255,255,255,.05);--rh:rgba(255,255,255,.02);
+}
+html.light{
+  --bg:#f5f2ec;--surface:#ffffff;--surface2:#ede8df;--border:#d6cdc0;
+  --gold:#8a5e1e;--gold-dim:#6b4815;--cyan:#1e7a7e;
+  --text:#1c1a2e;--muted:#7a7060;--success:#2a6b4a;--warn:#b04e14;
+  --hbg:rgba(245,242,236,.90);--cg:rgba(0,0,0,.06);--rh:rgba(0,0,0,.02);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;transition:background-color .25s,border-color .2s,color .2s;}
+.btn,.tab-btn,.subtab-btn{transition:opacity .18s,transform .12s,background-color .25s,color .2s,border-color .2s !important;}
+body{background:var(--bg);color:var(--text);font-family:var(--ff-u);font-size:15px;min-height:100vh;
+  background-image:radial-gradient(ellipse 80% 50% at 20% -10%,rgba(200,169,110,.07) 0%,transparent 60%),
+  radial-gradient(ellipse 60% 40% at 80% 110%,rgba(79,195,200,.05) 0%,transparent 55%);}
+html.light body{background-image:radial-gradient(ellipse 80% 50% at 20% -10%,rgba(138,94,30,.06) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 110%,rgba(30,122,126,.04) 0%,transparent 55%);}
+header{display:flex;align-items:center;gap:14px;padding:18px 28px;border-bottom:1px solid var(--border);
+  background:var(--hbg);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100;}
+.logo{font-family:var(--ff-h);font-size:1.1rem;color:var(--gold);letter-spacing:.08em;}
+header h1{font-family:var(--ff-h);font-size:1.45rem;font-weight:600;}
+.badge{font-size:.7rem;font-family:var(--ff-m);background:rgba(200,169,110,.12);color:var(--gold);
+  border:1px solid var(--gold-dim);padding:3px 10px;border-radius:20px;letter-spacing:.12em;}
+.thbtn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:20px;
+  padding:5px 13px;font-size:.78rem;font-family:var(--ff-u);font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.thbtn:hover{border-color:var(--gold-dim);color:var(--gold);}
+.tab-bar{display:flex;overflow-x:auto;gap:4px;padding:10px 20px 0;border-bottom:1px solid var(--border);background:var(--surface);scrollbar-width:none;}
+.tab-bar::-webkit-scrollbar{display:none;}
+.tab-btn{flex-shrink:0;font-family:var(--ff-u);font-size:.82rem;font-weight:600;letter-spacing:.04em;
+  background:none;border:none;color:var(--muted);cursor:pointer;padding:10px 18px;
+  border-radius:var(--r) var(--r) 0 0;border-bottom:2px solid transparent;white-space:nowrap;}
+.tab-btn:hover{color:var(--text);background:rgba(255,255,255,.03);}
+.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);background:rgba(200,169,110,.06);}
+.subtab-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:22px;}
+.subtab-btn{flex:1;min-width:110px;font-family:var(--ff-u);font-size:.82rem;font-weight:700;
+  letter-spacing:.03em;cursor:pointer;padding:10px 12px;border-radius:var(--r);
+  border:2px solid var(--border);background:var(--surface);color:var(--muted);text-align:center;}
+.subtab-btn:hover{border-color:var(--gold-dim);color:var(--text);}
+.subtab-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(200,169,110,.08);}
+.sticon{display:block;font-size:1.2rem;margin-bottom:2px;}
+.stlabel{display:block;font-size:.82rem;}
+.stdesc{display:block;font-size:.7rem;font-weight:400;color:var(--muted);margin-top:1px;}
+main{padding:28px 24px;max-width:1100px;margin:0 auto;}
+.panel{display:none;}.panel.active{display:block;animation:fi .25s ease;}
+.subpanel{display:none;}.subpanel.active{display:block;animation:fi .2s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+.sh{margin-bottom:22px;}.sh h2{font-family:var(--ff-h);font-size:1.9rem;font-weight:600;color:var(--gold);}
+.sh p{color:var(--muted);font-size:.88rem;margin-top:4px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+@media(max-width:640px){.g2,.g3{grid-template-columns:1fr;}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;margin-bottom:18px;}
+.ctitle{font-weight:700;font-size:.8rem;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:14px;}
+label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:5px;font-weight:600;letter-spacing:.04em;}
+input[type=number],input[type=text],select,textarea{width:100%;background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);font-family:var(--ff-m);font-size:.88rem;padding:8px 12px;border-radius:7px;outline:none;}
+input:focus,select:focus,textarea:focus{border-color:var(--gold-dim);}
+input[type=range]{width:100%;accent-color:var(--gold);}
+.rv{font-family:var(--ff-m);color:var(--gold);font-size:.85rem;text-align:right;margin-top:3px;}
+.fr{margin-bottom:14px;}
+select option{background:var(--surface2);color:var(--text);}
+.btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--gold-dim),var(--gold));
+  color:#07070d;font-family:var(--ff-u);font-weight:700;font-size:.85rem;letter-spacing:.06em;
+  border:none;border-radius:8px;padding:10px 22px;cursor:pointer;}
+.btn:hover{opacity:.88;transform:translateY(-1px);}
+.bsm{padding:6px 14px;font-size:.78rem;}
+.bgh{background:var(--surface2)!important;color:var(--muted)!important;border:1px solid var(--border)!important;}
+.bgh:hover{border-color:var(--gold-dim)!important;color:var(--text)!important;}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;}
+.metrics{display:flex;flex-wrap:wrap;gap:14px;margin:16px 0;}
+.metric{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:14px 18px;min-width:100px;flex:1;}
+.mlbl{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.mval{font-family:var(--ff-m);font-size:1.25rem;font-weight:500;color:var(--gold);}
+.alert{border-radius:8px;padding:12px 16px;font-size:.88rem;margin-top:12px;display:flex;align-items:flex-start;gap:10px;}
+.as{background:rgba(93,186,138,.1);border:1px solid rgba(93,186,138,.3);color:var(--success);}
+.ai{background:rgba(79,195,200,.1);border:1px solid rgba(79,195,200,.3);color:var(--cyan);}
+.aw{background:rgba(230,133,74,.1);border:1px solid rgba(230,133,74,.3);color:var(--warn);}
+.tbl{width:100%;border-collapse:collapse;font-size:.84rem;}
+.tbl th{background:var(--surface2);color:var(--muted);font-weight:700;font-size:.72rem;letter-spacing:.08em;
+  text-transform:uppercase;padding:9px 13px;border-bottom:1px solid var(--border);text-align:left;}
+.tbl td{padding:9px 13px;border-bottom:1px solid rgba(42,42,69,.4);font-family:var(--ff-m);}
+.tbl tr:last-child td{border-bottom:none;}.tbl tr:hover td{background:var(--rh);}
+.tbl td.sig{color:var(--success);font-weight:700;}.tbl td.ns{color:var(--muted);}
+.tbl tr.erow td{color:var(--muted);}.tbl tr.trow td{font-weight:700;border-top:2px solid var(--border);}
+.mwrap{overflow-x:auto;margin:10px 0;}
+.mtbl{border-collapse:collapse;}
+.mtbl td,.mtbl th{padding:3px 4px;}
+.mtbl th{font-size:.72rem;color:var(--muted);font-weight:700;text-align:center;background:var(--surface2);padding:5px 8px;border-bottom:1px solid var(--border);}
+.mtbl td.lbl{background:var(--surface2);color:var(--gold-dim);font-family:var(--ff-m);font-size:.78rem;text-align:center;padding:4px 10px;border-right:1px solid var(--border);}
+.mtbl input{width:68px;text-align:right;padding:5px 6px;font-size:.82rem;border-radius:4px;}
+.chi-grid{display:grid;gap:8px;margin:12px 0;}.chi-grid input{text-align:center;}
+.seg{display:inline-flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.seg input[type=radio]{display:none;}
+.seg label{padding:7px 16px;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--muted);}
+.seg input[type=radio]:checked+label{background:var(--gold-dim);color:#fff;}
+/* Factor definition */
+.frow{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;}
+.fi{font-family:var(--ff-m);font-size:.88rem;color:var(--gold);min-width:22px;font-weight:700;}
+.frow input[type=text]{width:72px;flex-shrink:0;}
+.frow select{width:105px;flex-shrink:0;}
+.fctrl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.fctrl label{margin:0;font-size:.82rem;}
+.fctrl input[type=number]{width:64px;}
+.cinfo{font-size:.8rem;color:var(--muted);margin-left:auto;font-family:var(--ff-m);}
+.cinfo.warn{color:var(--warn);}
+/* Info boxes */
+.ibox{background:rgba(200,169,110,.06);border-left:3px solid var(--gold-dim);border-radius:0 8px 8px 0;padding:12px 16px;font-size:.85rem;color:var(--text);margin-bottom:16px;}
+.ibox strong{color:var(--gold);}
+.mbox{background:rgba(79,195,200,.07);border:1px dashed rgba(79,195,200,.35);border-radius:var(--r);padding:14px 18px;font-size:.85rem;color:var(--cyan);margin-bottom:18px;}
+/* Paste zone */
+.pzone{border:2px dashed var(--border);border-radius:var(--r);background:var(--surface2);padding:14px 16px;}
+.pzone:focus-within{border-color:var(--gold-dim);}
+.pzone textarea{width:100%;min-height:70px;resize:vertical;background:transparent;border:none;outline:none;font-family:var(--ff-m);font-size:.82rem;color:var(--text);line-height:1.5;}
+.phint{font-size:.75rem;color:var(--muted);margin-top:6px;line-height:1.6;}
+.phint code{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:var(--ff-m);font-size:.74rem;}
+.ctog{background:none;border:none;color:var(--muted);font-family:var(--ff-u);font-size:.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;padding:0;}
+.ctog:hover{color:var(--gold);}.ctog .arr{transition:transform .2s;display:inline-block;}
+.ctog.open .arr{transform:rotate(90deg);}
+.coll{display:none;margin-top:12px;}.coll.open{display:block;}
+.rb{display:none;}.rb.show{display:block;}
+canvas.cq{border-radius:8px;display:block;max-width:100%;}
+.flr{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+footer{text-align:center;padding:32px 20px;font-size:.75rem;color:var(--muted);border-top:1px solid var(--border);margin-top:20px;}
+footer a{color:var(--gold-dim);text-decoration:none;}
+@media(max-width:500px){header h1{font-size:1.1rem;}main{padding:18px 14px;}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">HumAIno®</span>
+  <span style="color:var(--border)">│</span>
+  <h1>Análisis Estadístico Avanzado</h1>
+  <span class="badge" style="margin-left:auto">v4.0</span>
+  <button class="thbtn" onclick="toggleTheme()"><span id="thi">☀️</span><span id="thl">Claro</span></button>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="swT(0)">📊 ANOVA</button>
+  <button class="tab-btn" onclick="swT(1)">🔗 Correlación</button>
+  <button class="tab-btn" onclick="swT(2)">📈 Regresión</button>
+  <button class="tab-btn" onclick="swT(3)">📉 No Paramétricas</button>
+  <button class="tab-btn" onclick="swT(4)">✖ Chi-cuadrado</button>
+  <button class="tab-btn" onclick="swT(5)">🔢 Tamaño de Muestra</button>
+  <button class="tab-btn" onclick="swT(6)">🌱 Diseño Experimental</button>
+</div>
+
+<main>
+
+<!-- P0: ANOVA -->
+<section class="panel active" id="p0">
+  <div class="sh"><h2>Análisis de Varianza (ANOVA)</h2><p>Ingresa los datos observados para obtener la tabla ANOVA completa</p></div>
+  <div class="subtab-bar">
+    <button class="subtab-btn active" id="ab-dca"   onclick="swAN('dca')"><span class="sticon">🌿</span><span class="stlabel">DCA</span><span class="stdesc">Un factor</span></button>
+    <button class="subtab-btn"        id="ab-dbca"  onclick="swAN('dbca')"><span class="sticon">🧱</span><span class="stlabel">DBCA</span><span class="stdesc">Un factor + bloques</span></button>
+    <button class="subtab-btn"        id="ab-fdca"  onclick="swAN('fdca')"><span class="sticon">⚡</span><span class="stlabel">Factorial DCA</span><span class="stdesc">k factores, sin bloques</span></button>
+    <button class="subtab-btn"        id="ab-fdbca" onclick="swAN('fdbca')"><span class="sticon">🔬</span><span class="stlabel">Factorial DBCA</span><span class="stdesc">k factores en bloques</span></button>
+  </div>
+
+  <!-- DCA 1-factor -->
+  <div class="subpanel active" id="an-dca">
+    <div class="card">
+      <div class="ctitle">Grupos / tratamientos</div>
+      <div class="fr"><label>Tratamientos: <span id="ak-v" style="color:var(--gold)">3</span></label>
+        <input type="range" id="ak" min="2" max="8" value="3" oninput="updAG()"></div>
+      <button class="ctog" id="ptog" onclick="togPZ()"><span class="arr">▶</span> 📋 Pegar desde Excel</button>
+      <div class="coll" id="pcoll">
+        <div class="pzone" style="margin-top:10px"><textarea id="xpaste" placeholder="Selecciona columnas en Excel → Copiar → Pegar aquí…"></textarea></div>
+        <p class="phint">• <strong>Columnas = grupos</strong> · <strong>Filas = grupos</strong> · Acepta <code>Tab</code><code>;</code><code>,</code></p>
+        <div class="flr" style="margin-top:10px">
+          <button class="btn bsm" onclick="applyXP()">↙ Distribuir</button>
+          <button class="btn bsm bgh" onclick="document.getElementById('xpaste').value=''">✕</button>
+        </div>
+      </div>
+      <div id="ag-wrap" style="margin-top:14px"></div>
+      <button class="btn" style="margin-top:8px" onclick="calcAov()">⚡ Calcular ANOVA</button>
+    </div>
+    <div id="aov-res" class="rb"><div class="metrics" id="aov-met"></div><div id="aov-tbl" class="card"></div><div id="aov-alr"></div></div>
+  </div>
+
+  <!-- DBCA 1-factor + blocks -->
+  <div class="subpanel" id="an-dbca">
+    <div class="ibox"><strong>DBCA — Un factor en Bloques Completos al Azar.</strong> Matriz Tratamientos × Bloques. La tabla desglosa Bloques, Tratamientos y Error.</div>
+    <div class="card">
+      <div class="ctitle">Dimensiones</div>
+      <div class="g2">
+        <div class="fr"><label>Tratamientos (k): <span id="dbk-v" class="rv">4</span></label>
+          <input type="range" id="dbk" min="2" max="8" value="4" oninput="document.getElementById('dbk-v').textContent=this.value;bldDB()"></div>
+        <div class="fr"><label>Bloques (r): <span id="dbr-v" class="rv">4</span></label>
+          <input type="range" id="dbr" min="2" max="10" value="4" oninput="document.getElementById('dbr-v').textContent=this.value;bldDB()"></div>
+      </div>
+      <div class="ctitle">Datos (fila = tratamiento, col = bloque)</div>
+      <p class="phint" style="margin-bottom:8px">💡 Pega desde Excel con <code>Ctrl+V</code> sobre cualquier celda.</p>
+      <div class="mwrap" id="db-mwrap"></div>
+      <button class="btn" style="margin-top:14px" onclick="calcDB()">⚡ Calcular ANOVA DBCA</button>
+    </div>
+    <div id="db-res" class="rb"><div class="metrics" id="db-met"></div><div id="db-tbl" class="card"></div><div id="db-alr"></div></div>
+  </div>
+
+  <!-- Factorial DCA — k factors generic -->
+  <div class="subpanel" id="an-fdca">
+    <div class="ibox">
+      <strong>Factorial en DCA — hasta 4 factores, hasta 5 niveles cada uno, n réplicas por celda.</strong><br>
+      La tabla ANOVA desglosa todos los efectos principales e interacciones (2-way, 3-way, 4-way).
+    </div>
+    <div class="card">
+      <div class="ctitle">Definición de factores</div>
+      <div id="fdc-fwrap"></div>
+      <div class="fctrl">
+        <button class="btn bsm bgh" id="fdc-add" onclick="addF('fdc')">＋ Factor</button>
+        <button class="btn bsm bgh" id="fdc-rem" onclick="remF('fdc')">－ Factor</button>
+        <span style="color:var(--border)">·</span>
+        <label style="margin:0">Réplicas (n):</label>
+        <input type="number" id="fdc-n" value="3" min="2" max="10" style="width:64px" oninput="updFI('fdc')">
+        <span id="fdc-ci" class="cinfo"></span>
+      </div>
+      <button class="btn" style="margin-top:16px" onclick="bldFT('fdc')">⬇ Generar tabla de datos</button>
+    </div>
+    <div id="fdc-ts" style="display:none">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <span class="ctitle" style="margin:0">Datos — celdas editables, pega desde Excel</span>
+          <button class="btn bsm bgh" onclick="fillDef('fdc')">🎲 Ejemplo</button>
+        </div>
+        <p class="phint" style="margin-bottom:8px">💡 Pega en cualquier celda. Si tu Excel tiene columnas de etiqueta + valores, las primeras k columnas se ignoran automáticamente.</p>
+        <div class="mwrap" id="fdc-dw"></div>
+      </div>
+      <button class="btn" onclick="calcFDCA()">⚡ Calcular Factorial DCA</button>
+    </div>
+    <div id="fdc-res" class="rb" style="margin-top:20px">
+      <div class="metrics" id="fdc-met"></div>
+      <div id="fdc-atbl" class="card"></div>
+      <div id="fdc-alr"></div>
+    </div>
+  </div>
+
+  <!-- Factorial DBCA — k factors generic -->
+  <div class="subpanel" id="an-fdbca">
+    <div class="ibox">
+      <strong>Factorial en DBCA — hasta 4 factores, hasta 5 niveles, en r bloques.</strong><br>
+      Una observación por celda×bloque. La tabla incluye Bloques + todos los efectos principales e interacciones.
+    </div>
+    <div class="card">
+      <div class="ctitle">Definición de factores</div>
+      <div id="fdb-fwrap"></div>
+      <div class="fctrl">
+        <button class="btn bsm bgh" id="fdb-add" onclick="addF('fdb')">＋ Factor</button>
+        <button class="btn bsm bgh" id="fdb-rem" onclick="remF('fdb')">－ Factor</button>
+        <span style="color:var(--border)">·</span>
+        <label style="margin:0">Bloques (r):</label>
+        <input type="number" id="fdb-r" value="4" min="2" max="12" style="width:64px" oninput="updFI('fdb')">
+        <span id="fdb-ci" class="cinfo"></span>
+      </div>
+      <button class="btn" style="margin-top:16px" onclick="bldFT('fdb')">⬇ Generar tabla de datos</button>
+    </div>
+    <div id="fdb-ts" style="display:none">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <span class="ctitle" style="margin:0">Datos — una observación por celda×bloque</span>
+          <button class="btn bsm bgh" onclick="fillDef('fdb')">🎲 Ejemplo</button>
+        </div>
+        <div class="mwrap" id="fdb-dw"></div>
+      </div>
+      <button class="btn" onclick="calcFDBCA()">⚡ Calcular Factorial DBCA</button>
+    </div>
+    <div id="fdb-res" class="rb" style="margin-top:20px">
+      <div class="metrics" id="fdb-met"></div>
+      <div id="fdb-atbl" class="card"></div>
+      <div id="fdb-alr"></div>
+    </div>
+  </div>
+</section><!-- /p0 ANOVA -->
+
+<!-- P1: Correlación -->
+<section class="panel" id="p1">
+  <div class="sh"><h2>Correlación</h2><p>Pearson y Spearman</p></div>
+  <div class="g2">
+    <div class="card">
+      <div class="ctitle">Parámetros</div>
+      <div class="fr"><label>n: <span id="cn-v" class="rv">50</span></label><input type="range" id="cn" min="10" max="200" value="50" oninput="document.getElementById('cn-v').textContent=this.value"></div>
+      <div class="fr"><label>r a simular: <span id="cr-v" class="rv">0.70</span></label><input type="range" id="cr" min="-100" max="100" value="70" oninput="document.getElementById('cr-v').textContent=(this.value/100).toFixed(2)"></div>
+      <div class="fr"><label>Tipo</label><div class="seg"><input type="radio" name="ct" id="ctp" value="pearson" checked><label for="ctp">Pearson</label><input type="radio" name="ct" id="cts" value="spearman"><label for="cts">Spearman</label></div></div>
+      <button class="btn" onclick="calcCorr()">⚡ Calcular</button>
+      <div class="metrics" id="cor-met" style="margin-top:16px"></div>
+    </div>
+    <div class="card"><div class="ctitle">Dispersión</div><div style="height:320px;position:relative"><canvas id="cor-c"></canvas></div></div>
+  </div>
+</section>
+
+<!-- P2: Regresión -->
+<section class="panel" id="p2">
+  <div class="sh"><h2>Regresión Lineal Simple</h2><p>Y = β₀ + β₁X</p></div>
+  <div class="g2">
+    <div class="card">
+      <div class="ctitle">Parámetros</div>
+      <div class="fr"><label>n: <span id="rn-v" class="rv">50</span></label><input type="range" id="rn" min="10" max="200" value="50" oninput="document.getElementById('rn-v').textContent=this.value"></div>
+      <div class="fr"><label>β₀: <span id="rb0-v" class="rv">10.0</span></label><input type="range" id="rb0" min="-500" max="500" value="100" oninput="document.getElementById('rb0-v').textContent=(this.value/10).toFixed(1)"></div>
+      <div class="fr"><label>β₁: <span id="rb1-v" class="rv">2.0</span></label><input type="range" id="rb1" min="-50" max="50" value="20" oninput="document.getElementById('rb1-v').textContent=(this.value/10).toFixed(1)"></div>
+      <div class="fr"><label>σ: <span id="rsd-v" class="rv">5.0</span></label><input type="range" id="rsd" min="1" max="200" value="50" oninput="document.getElementById('rsd-v').textContent=(this.value/10).toFixed(1)"></div>
+      <button class="btn" onclick="calcReg()">⚡ Calcular</button>
+      <div class="metrics" id="reg-met" style="margin-top:16px"></div>
+    </div>
+    <div class="card"><div class="ctitle">Ajuste</div><div style="height:320px;position:relative"><canvas id="reg-c"></canvas></div></div>
+  </div>
+</section>
+
+<!-- P3: No Paramétricas -->
+<section class="panel" id="p3">
+  <div class="sh"><h2>Pruebas No Paramétricas</h2></div>
+  <div class="card">
+    <div class="fr"><label>Prueba</label><select id="np-tipo" onchange="updNP()"><option>Mann-Whitney U</option><option>Kruskal-Wallis</option><option>Wilcoxon (pareadas)</option></select></div>
+    <div id="np-in"></div>
+    <button class="btn" style="margin-top:12px" onclick="calcNP()">⚡ Calcular</button>
+    <div id="np-res" class="rb" style="margin-top:16px"></div>
+  </div>
+</section>
+
+<!-- P4: Chi-cuadrado -->
+<section class="panel" id="p4">
+  <div class="sh"><h2>Chi-cuadrado de Independencia</h2><p>Tabla de contingencia r × c</p></div>
+  <div class="card">
+    <div class="g2" style="margin-bottom:14px">
+      <div class="fr"><label>Filas: <span id="chr-v" class="rv">2</span></label><input type="range" id="chr" min="2" max="5" value="2" oninput="document.getElementById('chr-v').textContent=this.value;bldChi()"></div>
+      <div class="fr"><label>Columnas: <span id="chc-v" class="rv">2</span></label><input type="range" id="chc" min="2" max="5" value="2" oninput="document.getElementById('chc-v').textContent=this.value;bldChi()"></div>
+    </div>
+    <div class="ctitle">Frecuencias observadas</div>
+    <div id="chi-gw"></div>
+    <button class="btn" style="margin-top:14px" onclick="calcChi()">⚡ Calcular χ²</button>
+    <div id="chi-res" class="rb" style="margin-top:16px"></div>
+  </div>
+</section>
+
+<!-- P5: Tamaño muestra -->
+<section class="panel" id="p5">
+  <div class="sh"><h2>Calculadora de Tamaño de Muestra</h2></div>
+  <div class="mbox">📦 Las <strong>curvas de potencia</strong> se trasladaron a la app <em>Potencia &amp; Tamaño de Muestra</em>.</div>
+  <div class="card">
+    <div class="fr"><label>Para</label><div class="seg"><input type="radio" name="nt" id="ntm" value="medias" checked onchange="updNC()"><label for="ntm">Diferencia de Medias</label><input type="radio" name="nt" id="ntp" value="prop" onchange="updNC()"><label for="ntp">Proporciones</label></div></div>
+    <div id="nm-in"><div class="g2"><div class="fr"><label>δ</label><input type="number" id="ndelta" value="5" min="0.1" step="0.1"></div><div class="fr"><label>σ</label><input type="number" id="nsigma" value="10" min="0.1" step="0.1"></div></div></div>
+    <div id="np-in2" style="display:none"><div class="g2"><div class="fr"><label>p₁</label><input type="number" id="np1" value="0.5" min="0.01" max="0.99" step="0.01"></div><div class="fr"><label>p₂</label><input type="number" id="np2" value="0.3" min="0.01" max="0.99" step="0.01"></div></div></div>
+    <div class="g2">
+      <div class="fr"><label>α</label><select id="na"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
+      <div class="fr"><label>Potencia (1−β)</label><select id="np"><option value="0.80" selected>0.80</option><option value="0.90">0.90</option><option value="0.95">0.95</option></select></div>
+    </div>
+    <button class="btn" onclick="calcN()">⚡ Calcular n</button>
+    <div id="n-res" class="rb" style="margin-top:16px"><div class="metrics" id="n-met"></div><div id="n-alr"></div></div>
+  </div>
+</section>
+
+<!-- P6: Diseño Experimental -->
+<section class="panel" id="p6">
+  <div class="sh"><h2>Diseño Experimental</h2><p>Calcula réplicas y genera el croquis</p></div>
+  <div class="ibox"><strong>Conexión Δ ↔ d de Cohen:</strong> d = Δ/σ. Ej: Δ=15 kg/ha, σ=10 → d=1.5 (grande).</div>
+  <div class="subtab-bar">
+    <button class="subtab-btn active" id="de-b-dca"  onclick="swDE('dca')"><span class="sticon">🌿</span><span class="stlabel">DCA</span><span class="stdesc">Al Azar</span></button>
+    <button class="subtab-btn"        id="de-b-dbca" onclick="swDE('dbca')"><span class="sticon">🧱</span><span class="stlabel">DBCA</span><span class="stdesc">Bloques</span></button>
+    <button class="subtab-btn"        id="de-b-fact" onclick="swDE('fact')"><span class="sticon">⚡</span><span class="stlabel">Factorial</span><span class="stdesc">A×B×…</span></button>
+  </div>
+  <div id="de-dca">
+    <div class="g2">
+      <div class="card"><div class="ctitle">DCA</div>
+        <div class="fr"><label>Entrada</label><div class="seg"><input type="radio" name="dm" id="dmd" value="delta" checked onchange="togDCA()"><label for="dmd">Por Δ</label><input type="radio" name="dm" id="dmf" value="d" onchange="togDCA()"><label for="dmf">Por d</label></div></div>
+        <div class="fr"><label>k: <span id="dk-v" class="rv">4</span></label><input type="range" id="dk" min="2" max="12" value="4" oninput="document.getElementById('dk-v').textContent=this.value"></div>
+        <div id="dd-row" class="fr"><label>Δ</label><input type="number" id="dd" value="15" min="0.1" step="0.5"></div>
+        <div id="df-row" class="fr" style="display:none"><label>d Cohen</label><input type="number" id="df" value="1.5" min="0.1" step="0.1"></div>
+        <div class="fr"><label>σ</label><input type="number" id="ds" value="10" min="0.1" step="0.5"></div>
+        <div class="g2"><div class="fr"><label>α</label><select id="da"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
+          <div class="fr"><label>Potencia</label><select id="dp"><option value="0.70">0.70</option><option value="0.80" selected>0.80</option><option value="0.90">0.90</option></select></div></div>
+        <button class="btn" onclick="calcDCAd()">⚡ Calcular</button>
+      </div>
+      <div class="card" id="dca-out" style="display:none"><div class="ctitle">Resultados</div><div class="metrics" id="dca-met"></div><div id="dca-alr"></div></div>
+    </div>
+    <div class="card" id="dca-cq" style="display:none"><div class="ctitle">Croquis DCA</div><canvas id="dca-cv" class="cq"></canvas></div>
+  </div>
+  <div id="de-dbca" style="display:none">
+    <div class="g2">
+      <div class="card"><div class="ctitle">DBCA</div>
+        <div class="fr"><label>Entrada</label><div class="seg"><input type="radio" name="bm" id="bmd" value="delta" checked onchange="togDBCA()"><label for="bmd">Por Δ</label><input type="radio" name="bm" id="bmf" value="d" onchange="togDBCA()"><label for="bmf">Por d</label></div></div>
+        <div class="fr"><label>k: <span id="bk-v" class="rv">4</span></label><input type="range" id="bk" min="2" max="12" value="4" oninput="document.getElementById('bk-v').textContent=this.value"></div>
+        <div id="bd-row" class="fr"><label>Δ</label><input type="number" id="bd" value="12" min="0.1" step="0.5"></div>
+        <div id="bf-row" class="fr" style="display:none"><label>d Cohen</label><input type="number" id="bf" value="1.5" min="0.1" step="0.1"></div>
+        <div class="fr"><label>σ</label><input type="number" id="bs" value="8" min="0.1" step="0.5"></div>
+        <div class="fr"><label>Eficiencia bloques (%): <span id="be-v" class="rv">20</span></label><input type="range" id="be" min="0" max="50" value="20" step="5" oninput="document.getElementById('be-v').textContent=this.value"></div>
+        <div class="g2"><div class="fr"><label>α</label><select id="ba"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
+          <div class="fr"><label>Potencia</label><select id="bp"><option value="0.70">0.70</option><option value="0.80" selected>0.80</option><option value="0.90">0.90</option></select></div></div>
+        <button class="btn" onclick="calcDBCAd()">⚡ Calcular</button>
+      </div>
+      <div class="card" id="dbca-out" style="display:none"><div class="ctitle">Resultados</div><div class="metrics" id="dbca-met"></div><div id="dbca-alr"></div></div>
+    </div>
+    <div class="card" id="dbca-cq" style="display:none"><div class="ctitle">Croquis DBCA</div><canvas id="dbca-cv" class="cq"></canvas></div>
+  </div>
+  <div id="de-fact" style="display:none">
+    <div class="g2">
+      <div class="card"><div class="ctitle">Factorial (n por combinación)</div>
+        <div class="g2">
+          <div class="fr"><label>Niveles A: <span id="faa-v" class="rv">3</span></label><input type="range" id="faa" min="2" max="6" value="3" oninput="document.getElementById('faa-v').textContent=this.value"></div>
+          <div class="fr"><label>Niveles B: <span id="fab-v" class="rv">4</span></label><input type="range" id="fab" min="2" max="6" value="4" oninput="document.getElementById('fab-v').textContent=this.value"></div>
+        </div>
+        <div class="fr"><label>Entrada</label><div class="seg"><input type="radio" name="fam" id="famd" value="delta" checked onchange="togFA()"><label for="famd">Por Δ</label><input type="radio" name="fam" id="famf" value="d" onchange="togFA()"><label for="famf">Por d</label></div></div>
+        <div id="fad-row" class="fr"><label>Δ</label><input type="number" id="fad" value="10" min="0.1" step="0.5"></div>
+        <div id="faf-row" class="fr" style="display:none"><label>d</label><input type="number" id="faf" value="1.25" min="0.1" step="0.1"></div>
+        <div class="fr"><label>σ</label><input type="number" id="fas" value="8" min="0.1" step="0.5"></div>
+        <div class="g2"><div class="fr"><label>α</label><select id="faa2"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
+          <div class="fr"><label>Potencia</label><select id="fap"><option value="0.70">0.70</option><option value="0.80" selected>0.80</option><option value="0.90">0.90</option></select></div></div>
+        <button class="btn" onclick="calcFAdsgn()">⚡ Calcular</button>
+      </div>
+      <div class="card" id="fa-out" style="display:none"><div class="ctitle">Resultados</div><div class="metrics" id="fa-met"></div><div id="fa-gl"></div></div>
+    </div>
+    <div class="card" id="fa-cq" style="display:none"><div class="ctitle">Matriz Factorial</div><canvas id="fa-cv" class="cq"></canvas></div>
+  </div>
+</section>
+
+</main>
+<footer>
+  <div style="max-width:700px;margin:0 auto;">
+    <p style="font-size:.95rem;font-weight:700;color:var(--gold);font-family:var(--ff-h);letter-spacing:.06em;margin-bottom:6px">
+      Análisis Estadístico Avanzado · v4.0
+    </p>
+    <p style="margin-bottom:10px">
+      <span style="color:var(--text)">© 2025 <strong>Dr. Luis Antonio Chel-Guerrero</strong></span><br>
+      <span style="color:var(--muted);font-size:.8rem">Obra de autoría colaborativa humano–IA</span>
+    </p>
+    <!-- CC Badge -->
+    <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es" target="_blank"
+       title="Creative Commons BY-NC-ND 4.0 Internacional"
+       style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;
+              background:rgba(200,169,110,.08);border:1px solid var(--border);
+              border-radius:8px;padding:8px 14px;margin-bottom:12px">
+      <img src="https://licensebuttons.net/l/by-nc-nd/4.0/88x31.png"
+           alt="CC BY-NC-ND 4.0" style="height:22px;border-radius:3px">
+      <span style="font-size:.78rem;color:var(--muted);line-height:1.4">
+        Licencia <strong style="color:var(--gold)">CC BY-NC-ND 4.0</strong> Internacional<br>
+        Uso académico libre · citar al autor · sin modificaciones · sin uso comercial
+      </span>
+    </a>
+    <p style="font-size:.75rem;color:var(--muted);line-height:1.7;margin-bottom:8px">
+      Asistencia de IA: <strong>Claude</strong> (Anthropic) vía <strong>HumAIno®</strong><br>
+      <strong>HumAIno®</strong> es marca registrada ante el IMPI · Reg. 3019130 ·
+      Titular: Lilian Dolores Chel Guerrero · Vigencia: 2036<br>
+      Prohibida la modificación, redistribución o uso comercial sin autorización expresa del autor.
+    </p>
+    <p style="font-size:.72rem;color:var(--border)">
+      <a href="https://humaino.com" target="_blank">humaino.com</a>
+      · Mérida, Yucatán, México
+    </p>
+  </div>
+</footer>
+
+<script>
+/* ══ THEME ═══════════════════════════════════════════════════════ */
+let isDark=true;
+function toggleTheme(){
+  isDark=!isDark;
+  document.documentElement.classList.toggle('light',!isDark);
+  document.getElementById('thi').textContent=isDark?'☀️':'🌙';
+  document.getElementById('thl').textContent=isDark?'Claro':'Oscuro';
+  localStorage.setItem('theme',isDark?'dark':'light');
+  if(corrCh)calcCorr(); if(regCh)calcReg();
+}
+const cg=()=>isDark?'rgba(255,255,255,.05)':'rgba(0,0,0,.07)';
+const ct=()=>isDark?'#666880':'#9a9080';
+
+/* ══ NAVIGATION ══════════════════════════════════════════════════ */
+const panels=document.querySelectorAll('.panel'),tabBtns=document.querySelectorAll('.tab-btn');
+function swT(i){panels.forEach((p,j)=>p.classList.toggle('active',j===i));tabBtns.forEach((b,j)=>b.classList.toggle('active',j===i));}
+function swAN(w){['dca','dbca','fdca','fdbca'].forEach(id=>{document.getElementById('an-'+id).classList.toggle('active',id===w);document.getElementById('ab-'+id).classList.toggle('active',id===w);});}
+function swDE(w){['dca','dbca','fact'].forEach(id=>{document.getElementById('de-'+id).style.display=id===w?'':'none';document.getElementById('de-b-'+id).classList.toggle('active',id===w);});}
+
+/* ══ MATH ════════════════════════════════════════════════════════ */
+const sum=a=>a.reduce((s,v)=>s+v,0),mean=a=>sum(a)/a.length;
+function randn(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function randnCorr(n,rho){const x=[],y=[];for(let i=0;i<n;i++){const u=randn(),v=randn();x.push(u);y.push(rho*u+Math.sqrt(1-rho*rho)*v);}return{x,y};}
+function ranks(arr){
+  const s=arr.map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v);
+  const r=new Array(arr.length);let i=0;
+  while(i<s.length){let j=i;while(j<s.length-1&&s[j+1].v===s[j].v)j++;const avg=(i+j+2)/2;for(let k=i;k<=j;k++)r[s[k].i]=avg;i=j+1;}
+  return r;
+}
+function pearsonr(x,y){
+  const n=x.length,mx=mean(x),my=mean(y);let nu=0,dx=0,dy=0;
+  for(let i=0;i<n;i++){nu+=(x[i]-mx)*(y[i]-my);dx+=(x[i]-mx)**2;dy+=(y[i]-my)**2;}
+  const r=nu/Math.sqrt(dx*dy),t=r*Math.sqrt(n-2)/Math.sqrt(1-r*r);
+  return{r,p:2*(1-jStat.studentt.cdf(Math.abs(t),n-2))};
+}
+function spearmanr(x,y){return pearsonr(ranks(x),ranks(y));}
+function linreg(x,y){
+  const n=x.length,mx=mean(x),my=mean(y);let Sxy=0,Sxx=0;
+  for(let i=0;i<n;i++){Sxy+=(x[i]-mx)*(y[i]-my);Sxx+=(x[i]-mx)**2;}
+  const b1=Sxy/Sxx,b0=my-b1*mx,yh=x.map(xi=>b0+b1*xi);
+  let SSr=0,SSt=0;for(let i=0;i<n;i++){SSr+=(y[i]-yh[i])**2;SSt+=(y[i]-my)**2;}
+  const R2=1-SSr/SSt,t=b1/(Math.sqrt(SSr/(n-2))/Math.sqrt(Sxx));
+  return{b0,b1,R2,p:2*(1-jStat.studentt.cdf(Math.abs(t),n-2)),yhat:yh};
+}
+function fOneway(...gs){
+  const k=gs.length,all=gs.flat(),N=all.length,gm=mean(all);
+  let ssB=0,ssW=0;
+  for(const g of gs)ssB+=g.length*(mean(g)-gm)**2;
+  for(const g of gs){const m=mean(g);for(const v of g)ssW+=(v-m)**2;}
+  const dfB=k-1,dfW=N-k,msB=ssB/dfB,msW=ssW/dfW,F=msB/msW;
+  return{F,p:1-jStat.centralF.cdf(F,dfB,dfW),dfB,dfW,ssB,ssW,msB,msW};
+}
+function mwU(x,y){const n1=x.length,n2=y.length;let u1=0;for(const xi of x)for(const yj of y){if(xi>yj)u1+=1;else if(xi===yj)u1+=.5;}const U=Math.min(u1,n1*n2-u1),mu=n1*n2/2,sd=Math.sqrt(n1*n2*(n1+n2+1)/12),z=(U-mu)/sd;return{U,z,p:2*(1-jStat.normal.cdf(Math.abs(z),0,1))};}
+function kruskal(...gs){const all=gs.flat(),N=all.length,rk=ranks(all);let idx=0;const sr=gs.map(g=>{let s=0;for(let i=0;i<g.length;i++)s+=rk[idx++];return{n:g.length,sr:s};});const H=12/(N*(N+1))*sr.reduce((a,{n,sr})=>a+sr**2/n,0)-3*(N+1);return{H,df:gs.length-1,p:1-jStat.chisquare.cdf(H,gs.length-1)};}
+function wilcox(x,y){const d=x.map((xi,i)=>xi-y[i]).filter(v=>v!==0),rk=ranks(d.map(Math.abs));let Wp=0,Wm=0;for(let i=0;i<d.length;i++){if(d[i]>0)Wp+=rk[i];else Wm+=rk[i];}const n=d.length,W=Math.min(Wp,Wm),mu=n*(n+1)/4,sd=Math.sqrt(n*(n+1)*(2*n+1)/24),z=(W-mu)/sd;return{W,z,p:2*(1-jStat.normal.cdf(Math.abs(z),0,1))};}
+function chi2ct(tbl){const r=tbl.length,c=tbl[0].length,rs=tbl.map(row=>sum(row));const cs=Array(c).fill(0);let N=0;for(let i=0;i<r;i++){N+=rs[i];for(let j=0;j<c;j++)cs[j]+=tbl[i][j];}let x2=0;const exp=[];for(let i=0;i<r;i++){exp.push([]);for(let j=0;j<c;j++){const e=rs[i]*cs[j]/N;exp[i].push(e);x2+=(tbl[i][j]-e)**2/e;}}return{chi2:x2,p:1-jStat.chisquare.cdf(x2,(r-1)*(c-1)),dof:(r-1)*(c-1),expected:exp};}
+const zp=p=>jStat.normal.inv(p,0,1);
+const pstr=p=>p<0.0001?'< 0.0001':p.toFixed(4);
+const effLbl=d=>d<0.5?'Pequeño 🟡':d<0.8?'Mediano 🔵':'Grande 🟢';
+function sAlert(p,a=0.05){return p<a?`<div class="alert as">✅ Significativo (p = ${pstr(p)} &lt; ${a})</div>`:`<div class="alert ai">❌ No significativo (p = ${pstr(p)} ≥ ${a})</div>`;}
+function mH(arr){return`<div class="metrics">${arr.map(d=>`<div class="metric"><div class="mlbl">${d.l}</div><div class="mval">${d.v}</div></div>`).join('')}</div>`;}
+
+/* ══ ANOVA TABLE ═════════════════════════════════════════════════ */
+function anovaT(rows){
+  let h=`<div class="ctitle">Tabla ANOVA</div><table class="tbl"><tr><th>Fuente</th><th>SC</th><th>gl</th><th>CM</th><th>F</th><th>p-valor</th></tr>`;
+  for(const r of rows){
+    const sc=r.p!=null&&r.p<0.05?' class="sig"':r.p!=null?' class="ns"':'';
+    const rc=r.l==='Error'?' class="erow"':r.l==='Total'?' class="trow"':'';
+    h+=`<tr${rc}><td><strong>${r.l}</strong></td><td>${r.ss!=null?r.ss.toFixed(4):'—'}</td><td>${r.df}</td><td>${r.ms!=null?r.ms.toFixed(4):'—'}</td><td>${r.F!=null?r.F.toFixed(4):'—'}</td><td${sc}>${r.p!=null?pstr(r.p):'—'}</td></tr>`;
+  }
+  return h+'</table>';
+}
+
+/* ══ K-FACTOR ANOVA ENGINE ════════════════════════════════════════
+   Algorithm: Yates inclusion-exclusion decomposition
+   For balanced k-factor factorial with nReps replicates per cell.
+
+   SS_S = nReps × Q_S × Σ_{combo_S} θ²_S(combo)
+   where Q_S = ∏_{f ∉ S} levels_f
+   and θ_S(combo) = Σ_{T⊆S} (-1)^(|S|-|T|) × margMean_T(combo|_T)
+═══════════════════════════════════════════════════════════════════*/
+function genCombos(lc){let r=[[]];for(const l of lc){const nr=[];for(const c of r)for(let i=0;i<l;i++)nr.push([...c,i]);r=nr;}return r;}
+function pSet(arr){const r=[[]];for(const x of arr){const n=r.length;for(let i=0;i<n;i++)r.push([...r[i],x]);}return r;}
+
+function kFactorANOVA(lc,nReps,getReps){
+  const k=lc.length,allC=genCombos(lc),P=lc.reduce((p,v)=>p*v,1);
+  const CM=new Map(),allV=[];
+  for(const c of allC){const v=getReps(c);allV.push(...v);CM.set(c.join(','),mean(v));}
+  const GM=mean(allV);
+  const fidxs=Array.from({length:k},(_,i)=>i);
+  const allS=pSet(fidxs).filter(s=>s.length>0);
+
+  // Precompute all marginal means
+  const MM=new Map();
+  for(const S of allS){
+    for(const sc of genCombos(S.map(i=>lc[i]))){
+      let t=0,n=0;
+      for(const c of allC){if(S.every((fi,idx)=>c[fi]===sc[idx])){t+=CM.get(c.join(','));n++;}}
+      MM.set(S.join('_')+':'+sc.join(','),t/n);
+    }
+  }
+  const mm=(S,sc)=>S.length===0?GM:MM.get(S.join('_')+':'+sc.join(','));
+
+  // Compute SS for each effect
+  const res=[];
+  for(const S of allS){
+    const SL=S.map(i=>lc[i]),Q=P/SL.reduce((p,v)=>p*v,1),psS=pSet(S);
+    let SS=0;
+    for(const sc of genCombos(SL)){
+      let th=0;
+      for(const T of psS){th+=(-1)**(S.length-T.length)*mm(T,T.map(fi=>sc[S.indexOf(fi)]));}
+      SS+=th**2;
+    }
+    SS*=nReps*Q;
+    res.push({S,SS,df:SL.map(l=>l-1).reduce((p,v)=>p*v,1)});
+  }
+  res.sort((a,b)=>a.S.length-b.S.length||a.S[0]-b.S[0]);
+
+  let SSE=0;for(const c of allC){const cm=CM.get(c.join(','));for(const v of getReps(c))SSE+=(v-cm)**2;}
+  const dfE=P*(nReps-1),SSTot=sum(allV.map(v=>(v-GM)**2)),MSE=dfE>0?SSE/dfE:0;
+  for(const r of res){r.MS=r.SS/r.df;r.F=MSE>0?r.MS/MSE:0;r.p=MSE>0?1-jStat.centralF.cdf(r.F,r.df,dfE):1;}
+  return{res,SSE,dfE,MSE,SSTot,dfTot:P*nReps-1};
+}
+
+function kFactorDBCA(lc,rB,getData){
+  const allC=genCombos(lc),P=lc.reduce((p,v)=>p*v,1),N=P*rB;
+  const allV=[];
+  for(let b=0;b<rB;b++)for(const c of allC)allV.push(getData(b,c));
+  const GM=mean(allV),SSTot=sum(allV.map(v=>(v-GM)**2));
+  const blM=Array.from({length:rB},(_,b)=>mean(allC.map(c=>getData(b,c))));
+  const SSBlk=P*sum(blM.map(m=>(m-GM)**2));
+  // Get treatment SS via DCA engine (blocks = "reps")
+  const {res}=kFactorANOVA(lc,rB,c=>Array.from({length:rB},(_,b)=>getData(b,c)));
+  const SSTrt=sum(res.map(r=>r.SS));
+  const SSE=SSTot-SSBlk-SSTrt;
+  const dfE=Math.max(1,(rB-1)*(P-1)),dfB=rB-1;
+  const MSBlk=SSBlk/dfB,MSE=SSE/dfE,FBlk=MSBlk/MSE,pBlk=1-jStat.centralF.cdf(FBlk,dfB,dfE);
+  for(const r of res){r.MS=r.SS/r.df;r.F=r.MS/MSE;r.p=1-jStat.centralF.cdf(r.F,r.df,dfE);}
+  return{res,SSBlk,dfB,MSBlk,FBlk,pBlk,SSE,dfE,MSE,SSTot,dfTot:N-1};
+}
+
+/* ══ FACTORIAL FACTOR UI ═════════════════════════════════════════ */
+let fdcRC=2,fdbRC=2;
+const FN=['A','B','C','D'];
+
+function initFUI(p){
+  const dl=[2,3];
+  document.getElementById(`${p}-fwrap`).innerHTML='';
+  (p==='fdc'?fdcRC=0:fdbRC=0);
+  for(let i=0;i<2;i++)appFRow(p,FN[i],dl[i]);
+  updFI(p);
+}
+function appFRow(p,name,levels=2){
+  const cnt=p==='fdc'?fdcRC:fdbRC;
+  if(!name)name=FN[cnt]||`F${cnt+1}`;
+  const w=document.getElementById(`${p}-fwrap`),d=document.createElement('div');
+  d.className='frow';d.id=`${p}-r${cnt}`;
+  d.innerHTML=`<span class="fi">${cnt+1}.</span>
+    <input type="text" id="${p}-fn${cnt}" value="${name}" maxlength="5" style="width:72px" oninput="updFI('${p}')">
+    <select id="${p}-fl${cnt}" onchange="updFI('${p}')">
+      ${[2,3,4,5].map(l=>`<option value="${l}"${l===levels?' selected':''}>${l} niveles</option>`).join('')}
+    </select>`;
+  w.appendChild(d);
+  if(p==='fdc')fdcRC++;else fdbRC++;
+}
+function addF(p){const c=p==='fdc'?fdcRC:fdbRC;if(c>=4)return;appFRow(p);document.getElementById(`${p}-add`).disabled=(p==='fdc'?fdcRC:fdbRC)>=4;document.getElementById(`${p}-rem`).disabled=false;updFI(p);}
+function remF(p){const c=p==='fdc'?fdcRC:fdbRC;if(c<=2)return;document.getElementById(`${p}-r${c-1}`)?.remove();if(p==='fdc')fdcRC--;else fdbRC--;document.getElementById(`${p}-add`).disabled=false;document.getElementById(`${p}-rem`).disabled=(p==='fdc'?fdcRC:fdbRC)<=2;updFI(p);}
+function getFC(p){const c=p==='fdc'?fdcRC:fdbRC;const f=[];for(let i=0;i<c;i++)f.push({name:document.getElementById(`${p}-fn${i}`)?.value||FN[i],levels:+document.getElementById(`${p}-fl${i}`)?.value||2});return f;}
+function updFI(p){
+  const f=getFC(p),P=f.reduce((t,fi)=>t*fi.levels,1);
+  const n=+(p==='fdc'?document.getElementById('fdc-n'):document.getElementById('fdb-r')).value||3;
+  const el=document.getElementById(`${p}-ci`);
+  el.textContent=`${P} combinaciones × ${n} ${p==='fdc'?'rép.':'bloq.'} = ${P*n} u.e.`;
+  el.className='cinfo'+(P>80?' warn':'');
+}
+
+/* ══ BUILD FACTORIAL DATA TABLE ══════════════════════════════════ */
+function bldFT(p){
+  const f=getFC(p),P=f.reduce((t,fi)=>t*fi.levels,1);
+  if(P>200){alert('Demasiadas combinaciones (>200). Reduce niveles o factores.');return;}
+  const isDCA=p==='fdc';
+  const n=isDCA?+document.getElementById('fdc-n').value:+document.getElementById('fdb-r').value;
+  const lc=f.map(fi=>fi.levels),allC=genCombos(lc),lbl=isDCA?'Rep':'Bloque';
+  let h=`<table class="mtbl"><thead><tr>${f.map(fi=>`<th>${fi.name}</th>`).join('')}${Array.from({length:n},(_,i)=>`<th>${lbl} ${i+1}</th>`).join('')}</tr></thead><tbody>`;
+  allC.forEach((combo,ci)=>{
+    h+=`<tr>${combo.map(l=>`<td class="lbl">${l+1}</td>`).join('')}${Array.from({length:n},(_,j)=>{
+      const def=dv(f,combo,j,isDCA);
+      return`<td><input type="number" step="any" id="${p}-c${ci}-${j}" value="${def}" onpaste="tPaste(event,this,'${p}',${ci},${j},${n},${allC.length},${f.length})"></td>`;
+    }).join('')}</tr>`;
+  });
+  h+='</tbody></table>';
+  document.getElementById(`${p}-dw`).innerHTML=h;
+  document.getElementById(`${p}-ts`).style.display='';
+}
+function dv(f,combo,j,isDCA){let v=50;for(let i=0;i<f.length;i++)v+=combo[i]*(4+i*3);v+=(isDCA?randn()*3:j*1.2+randn()*2);return v.toFixed(1);}
+function fillDef(p){
+  const f=getFC(p),isDCA=p==='fdc';
+  const n=isDCA?+document.getElementById('fdc-n').value:+document.getElementById('fdb-r').value;
+  const allC=genCombos(f.map(fi=>fi.levels));
+  allC.forEach((c,ci)=>{for(let j=0;j<n;j++){const el=document.getElementById(`${p}-c${ci}-${j}`);if(el)el.value=dv(f,c,j,isDCA);}});
+}
+function tPaste(e,inp,p,row,col,nC,nR,kF){
+  e.preventDefault();
+  const raw=(e.clipboardData||window.clipboardData).getData('text');
+  const lines=raw.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim().split('\n');
+  for(let dr=0;dr<lines.length&&row+dr<nR;dr++){
+    const vals=lines[dr].split(/[\t,;]+/).map(v=>parseFloat(v.replace(',','.')));
+    const skip=vals.length===kF+nC?kF:0;
+    for(let dc=0;dc+col<nC&&dc<vals.length-skip;dc++){
+      const v=vals[skip+dc];const el=document.getElementById(`${p}-c${row+dr}-${col+dc}`);
+      if(el&&!isNaN(v))el.value=v;
+    }
+  }
+}
+
+/* ══ CALCULATE FACTORIAL DCA ══════════════════════════════════════ */
+function calcFDCA(){
+  const f=getFC('fdc'),nR=+document.getElementById('fdc-n').value;
+  const lc=f.map(fi=>fi.levels),allC=genCombos(lc);
+  const cmap=new Map(allC.map((c,i)=>[c.join(','),i]));
+  const {res,SSE,dfE,MSE,SSTot,dfTot}=kFactorANOVA(lc,nR,c=>{
+    const ci=cmap.get(c.join(','));
+    return Array.from({length:nR},(_,j)=>+document.getElementById(`fdc-c${ci}-${j}`)?.value||0);
+  });
+  showFRes('fdc',f,res,SSE,dfE,MSE,SSTot,dfTot,null,null,null,null,null);
+}
+
+/* ══ CALCULATE FACTORIAL DBCA ═════════════════════════════════════ */
+function calcFDBCA(){
+  const f=getFC('fdb'),rB=+document.getElementById('fdb-r').value;
+  const lc=f.map(fi=>fi.levels),allC=genCombos(lc);
+  const cmap=new Map(allC.map((c,i)=>[c.join(','),i]));
+  const {res,SSBlk,dfB,MSBlk,FBlk,pBlk,SSE,dfE,MSE,SSTot,dfTot}=kFactorDBCA(lc,rB,(b,c)=>{
+    const ci=cmap.get(c.join(','));
+    return +document.getElementById(`fdb-c${ci}-${b}`)?.value||0;
+  });
+  showFRes('fdb',f,res,SSE,dfE,MSE,SSTot,dfTot,SSBlk,dfB,MSBlk,FBlk,pBlk);
+}
+
+function showFRes(p,f,res,SSE,dfE,MSE,SSTot,dfTot,SSBlk,dfB,MSBlk,FBlk,pBlk){
+  const isDB=SSBlk!==null;
+  document.getElementById(`${p}-res`).classList.add('show');
+  const main=res.filter(r=>r.S.length===1);
+  document.getElementById(`${p}-met`).innerHTML=mH([
+    ...main.map(r=>({l:`F(${f[r.S[0]].name})`,v:r.F.toFixed(3)})),
+    {l:'MSError',v:MSE.toFixed(4)},{l:'gl Error',v:dfE}]);
+  const trows=[];
+  if(isDB)trows.push({l:'Bloques',ss:SSBlk,df:dfB,ms:MSBlk,F:FBlk,p:pBlk});
+  for(const r of res){const lbl=r.S.map(i=>f[i].name).join('×');trows.push({l:lbl,ss:r.SS,df:r.df,ms:r.MS,F:r.F,p:r.p});}
+  trows.push({l:'Error',ss:SSE,df:dfE,ms:MSE,F:null,p:null});
+  trows.push({l:'Total',ss:SSTot,df:dfTot,ms:null,F:null,p:null});
+  document.getElementById(`${p}-atbl`).innerHTML=anovaT(trows);
+  let al='';
+  const sigIxn=res.filter(r=>r.S.length>1&&r.p<0.05);
+  if(sigIxn.length)al+=`<div class="alert aw">⚠️ Interacción(es) significativa(s): <strong>${sigIxn.map(r=>r.S.map(i=>f[i].name).join('×')).join(', ')}</strong> — interpretar efectos principales con precaución.</div>`;
+  const sigM=res.filter(r=>r.S.length===1&&r.p<0.05);
+  if(sigM.length)al+=`<div class="alert as">✅ Efectos principales significativos: <strong>${sigM.map(r=>f[r.S[0]].name).join(', ')}</strong></div>`;
+  if(!sigIxn.length&&!sigM.length)al+=`<div class="alert ai">Ningún efecto significativo con α = 0.05.</div>`;
+  document.getElementById(`${p}-alr`).innerHTML=al;
+}
+
+/* ══ ANOVA DCA (one-way) ══════════════════════════════════════════ */
+function togPZ(){document.getElementById('ptog').classList.toggle('open');document.getElementById('pcoll').classList.toggle('open');}
+function ns(s){return s.replace(/\r\n/g,'\n').replace(/[\t;|]/g,',').replace(/\n/g,',').replace(/,+/g,',').replace(/[^\d.,\-eE]/g,',').replace(/,+/g,',').replace(/^,|,$/g,'').trim();}
+function pXBlock(raw){
+  const rows=raw.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim().split('\n');
+  const hasTAB=rows.some(r=>r.includes('\t'));
+  if(hasTAB){const mx=rows.map(r=>r.split('\t').map(c=>parseFloat(c.replace(',','.'))));const nc=Math.max(...mx.map(r=>r.length));const gs=Array.from({length:nc},()=>[]);for(const row of mx)for(let c=0;c<nc;c++){const v=row[c];if(!isNaN(v))gs[c].push(v);}return gs.filter(g=>g.length>0);}
+  return rows.map(r=>r.split(/[,;\s]+/).map(v=>parseFloat(v.replace(',','.'))).filter(v=>!isNaN(v))).filter(g=>g.length>0);
+}
+function applyXP(){const raw=document.getElementById('xpaste').value;if(!raw.trim())return;const gs=pXBlock(raw);if(!gs.length){alert('No se detectaron datos');return;}const k=Math.max(2,Math.min(gs.length,8));document.getElementById('ak').value=k;updAG();for(let i=0;i<k;i++){const el=document.getElementById(`ag${i}`);if(el&&gs[i])el.value=gs[i].join(', ');}togPZ();}
+function nPaste(e,inp){e.preventDefault();inp.value=ns((e.clipboardData||window.clipboardData).getData('text'));}
+function pGrp(id){const el=document.getElementById(id);if(!el)return null;const a=el.value.split(/[,\s]+/).map(x=>parseFloat(x.replace(',','.'))).filter(x=>!isNaN(x));return a.length?a:null;}
+function updAG(){
+  const k=+document.getElementById('ak').value;document.getElementById('ak-v').textContent=k;
+  const defs=['28.4,31.2,29.7,30.8,32.1','35.2,33.8,36.7,34.5,37.2','22.1,24.5,23.8,25.1,21.9','40.3,38.7,42.1,39.8,41.5','27.6,26.2,28.9,27.1,29.4','31.4,30.8,32.6,31.0,33.2','18.5,19.2,17.8,20.1,18.9','45.2,44.6,46.3,43.8,47.1'];
+  const prev=Array.from({length:k},(_,i)=>{const e=document.getElementById(`ag${i}`);return e?e.value:null;});
+  document.getElementById('ag-wrap').innerHTML=Array.from({length:k},(_,i)=>`<div class="fr"><label>Tratamiento ${i+1}</label><input type="text" id="ag${i}" value="${prev[i]??defs[i]??''}" onpaste="nPaste(event,this)"></div>`).join('');
+}
+function calcAov(){
+  const k=+document.getElementById('ak').value;const gs=Array.from({length:k},(_,i)=>pGrp(`ag${i}`)||[]);
+  if(!gs.every(g=>g.length>1)){alert('Cada tratamiento necesita al menos 2 datos');return;}
+  const{F,p,dfB,dfW,ssB,ssW,msB,msW}=fOneway(...gs);
+  document.getElementById('aov-res').classList.add('show');
+  document.getElementById('aov-met').innerHTML=mH([{l:'F',v:F.toFixed(4)},{l:'p-valor',v:pstr(p)},{l:'gl Trat.',v:dfB},{l:'gl Error',v:dfW}]);
+  document.getElementById('aov-tbl').innerHTML=anovaT([{l:'Tratamientos',ss:ssB,df:dfB,ms:msB,F,p},{l:'Error',ss:ssW,df:dfW,ms:msW,F:null,p:null},{l:'Total',ss:ssB+ssW,df:dfB+dfW,ms:null,F:null,p:null}]);
+  document.getElementById('aov-alr').innerHTML=sAlert(p);
+}
+
+/* ══ ANOVA DBCA (one-way) ═════════════════════════════════════════ */
+function bldDB(){
+  const k=+document.getElementById('dbk').value,r=+document.getElementById('dbr').value;
+  const base=[[8.2,9.1,7.8,8.7,9.4,10.1,8.5,9.8,7.6,8.9],[10.5,11.2,9.8,10.9,11.6,12.3,10.1,11.4,9.6,10.8],[6.1,6.8,5.9,6.5,7.2,6.4,5.8,6.9,6.2,7.0],[9.3,10.1,8.6,9.7,10.4,9.8,8.9,10.2,9.0,9.5],[7.4,8.2,7.0,8.0,7.8,8.5,7.3,8.1,7.6,7.9],[11.2,12.0,10.8,11.5,12.1,11.7,10.5,11.8,11.0,12.4],[5.5,6.2,5.3,5.8,6.5,5.9,5.2,6.0,5.6,6.3],[13.1,14.0,12.8,13.5,14.2,13.8,12.5,13.9,13.2,14.5]];
+  let h=`<table class="mtbl"><thead><tr><th></th>${Array.from({length:r},(_,j)=>`<th>Blq ${j+1}</th>`).join('')}</tr></thead><tbody>`;
+  for(let i=0;i<k;i++){h+=`<tr><th style="text-align:left;padding:4px 10px;font-size:.78rem">T${i+1}</th>`;for(let j=0;j<r;j++){const def=(base[i%base.length]?.[j%10]??+(8+i-j*0.3).toFixed(1));h+=`<td><input type="number" step="0.01" id="dbm-${i}-${j}" value="${def}" onpaste="mPaste(event,this,${i},${j},'dbm')"></td>`;}h+='</tr>';}
+  document.getElementById('db-mwrap').innerHTML=h+'</tbody></table>';
+}
+function mPaste(e,inp,ri,ci,pfx){
+  e.preventDefault();const raw=(e.clipboardData||window.clipboardData).getData('text');
+  const lines=raw.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim().split('\n');
+  for(let dr=0;dr<lines.length;dr++){const vals=lines[dr].split(/[\t,;]+/);for(let dc=0;dc<vals.length;dc++){const v=parseFloat(vals[dc].replace(',','.'));const el=document.getElementById(`${pfx}-${ri+dr}-${ci+dc}`);if(el&&!isNaN(v))el.value=v;}}
+}
+function calcDB(){
+  const k=+document.getElementById('dbk').value,r=+document.getElementById('dbr').value;
+  const data=Array.from({length:k},(_,i)=>Array.from({length:r},(_,j)=>+document.getElementById(`dbm-${i}-${j}`).value||0));
+  const N=k*r,gm=mean(data.flat());
+  const tM=data.map(row=>mean(row)),bM=Array.from({length:r},(_,j)=>mean(data.map(row=>row[j])));
+  const SSTot=sum(data.flat().map(v=>(v-gm)**2)),SSTrt=r*sum(tM.map(m=>(m-gm)**2)),SSBlk=k*sum(bM.map(m=>(m-gm)**2)),SSE=SSTot-SSTrt-SSBlk;
+  const dfT=k-1,dfB=r-1,dfE=(k-1)*(r-1),dfTot=N-1;
+  const MST=SSTrt/dfT,MSB=SSBlk/dfB,MSE2=SSE/dfE;
+  const FT=MST/MSE2,FB=MSB/MSE2,pT=1-jStat.centralF.cdf(FT,dfT,dfE),pB=1-jStat.centralF.cdf(FB,dfB,dfE);
+  document.getElementById('db-res').classList.add('show');
+  document.getElementById('db-met').innerHTML=mH([{l:'F Tratamientos',v:FT.toFixed(4)},{l:'p Tratamientos',v:pstr(pT)},{l:'F Bloques',v:FB.toFixed(4)},{l:'p Bloques',v:pstr(pB)}]);
+  document.getElementById('db-tbl').innerHTML=anovaT([{l:'Bloques',ss:SSBlk,df:dfB,ms:MSB,F:FB,p:pB},{l:'Tratamientos',ss:SSTrt,df:dfT,ms:MST,F:FT,p:pT},{l:'Error',ss:SSE,df:dfE,ms:MSE2,F:null,p:null},{l:'Total',ss:SSTot,df:dfTot,ms:null,F:null,p:null}]);
+  document.getElementById('db-alr').innerHTML=sAlert(pT);
+}
+
+/* ══ CORRELACIÓN ═════════════════════════════════════════════════ */
+let corrCh=null;
+function calcCorr(){
+  const n=+document.getElementById('cn').value,rho=document.getElementById('cr').value/100;
+  const tipo=document.querySelector('input[name="ct"]:checked').value;
+  const{x,y}=randnCorr(n,rho);
+  const res=tipo==='pearson'?pearsonr(x,y):spearmanr(x,y);
+  document.getElementById('cor-met').innerHTML=mH([{l:`r (${tipo})`,v:res.r.toFixed(4)},{l:'p-valor',v:pstr(res.p)},{l:'R²',v:(res.r**2).toFixed(4)}]);
+  const{b0,b1}=linreg(x,y),xmn=Math.min(...x),xmx=Math.max(...x);
+  const ctx=document.getElementById('cor-c').getContext('2d');
+  if(corrCh)corrCh.destroy();
+  corrCh=new Chart(ctx,{data:{datasets:[
+    {type:'scatter',label:'Datos',data:x.map((xi,i)=>({x:xi,y:y[i]})),pointRadius:4,pointBackgroundColor:'rgba(79,195,200,.55)',pointBorderColor:'rgba(79,195,200,.9)'},
+    {type:'line',label:'Ajuste',data:[{x:xmn,y:b0+b1*xmn},{x:xmx,y:b0+b1*xmx}],borderColor:'#c8a96e',borderWidth:2,pointRadius:0,tension:0}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:ct(),font:{family:'JetBrains Mono',size:11}}}},
+      scales:{x:{ticks:{color:ct()},grid:{color:cg()}},y:{ticks:{color:ct()},grid:{color:cg()}}}}});
+}
+calcCorr();
+
+/* ══ REGRESIÓN ═══════════════════════════════════════════════════ */
+let regCh=null;
+function calcReg(){
+  const n=+document.getElementById('rn').value,b0=document.getElementById('rb0').value/10,b1=document.getElementById('rb1').value/10,sd=document.getElementById('rsd').value/10;
+  const x=Array.from({length:n},(_,i)=>i*10/(n-1)),y=x.map(xi=>b0+b1*xi+randn()*sd);
+  const res=linreg(x,y);
+  document.getElementById('reg-met').innerHTML=mH([{l:'β₀ est.',v:res.b0.toFixed(3)},{l:'β₁ est.',v:res.b1.toFixed(3)},{l:'R²',v:res.R2.toFixed(4)},{l:'p(β₁)',v:pstr(res.p)}]);
+  const ctx=document.getElementById('reg-c').getContext('2d');
+  if(regCh)regCh.destroy();
+  regCh=new Chart(ctx,{data:{datasets:[
+    {type:'scatter',label:'Observado',data:x.map((xi,i)=>({x:xi,y:y[i]})),pointRadius:4,pointBackgroundColor:'rgba(79,195,200,.55)',pointBorderColor:'rgba(79,195,200,.9)'},
+    {type:'line',label:`Y=${res.b0.toFixed(2)}+${res.b1.toFixed(2)}X`,data:x.map((xi,i)=>({x:xi,y:res.yhat[i]})),borderColor:'#c8a96e',borderWidth:2.5,pointRadius:0,tension:0}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:ct(),font:{family:'JetBrains Mono',size:11}}}},
+      scales:{x:{ticks:{color:ct()},grid:{color:cg()}},y:{ticks:{color:ct()},grid:{color:cg()}}}}});
+}
+
+/* ══ NO PARAMÉTRICAS ═════════════════════════════════════════════ */
+function updNP(){
+  const t=document.getElementById('np-tipo').value;let h='';
+  if(t==='Mann-Whitney U'){h=`<div class="fr"><label>Grupo 1</label><input type="text" id="np-g1" value="23,25,27,29,31,33,28,30" onpaste="nPaste(event,this)"></div><div class="fr"><label>Grupo 2</label><input type="text" id="np-g2" value="18,20,22,24,26,28,19,21" onpaste="nPaste(event,this)"></div>`;}
+  else if(t==='Kruskal-Wallis'){h=`<div class="fr"><label>Grupo 1</label><input type="text" id="np-g1" value="23,25,27,29,31" onpaste="nPaste(event,this)"></div><div class="fr"><label>Grupo 2</label><input type="text" id="np-g2" value="18,20,22,24,26" onpaste="nPaste(event,this)"></div><div class="fr"><label>Grupo 3</label><input type="text" id="np-g3" value="30,32,34,36,38" onpaste="nPaste(event,this)"></div>`;}
+  else{h=`<div class="fr"><label>Antes</label><input type="text" id="np-g1" value="20,22,19,25,28,30,18,24" onpaste="nPaste(event,this)"></div><div class="fr"><label>Después</label><input type="text" id="np-g2" value="23,25,22,27,31,33,21,26" onpaste="nPaste(event,this)"></div>`;}
+  document.getElementById('np-in').innerHTML=h;
+}
+updNP();
+function calcNP(){
+  const t=document.getElementById('np-tipo').value,g1=pGrp('np-g1'),g2=pGrp('np-g2');
+  if(!g1||!g2){alert('Ingresa datos válidos');return;}
+  let h='<div class="metrics">',p;
+  if(t==='Mann-Whitney U'){const r=mwU(g1,g2);p=r.p;h+=`<div class="metric"><div class="mlbl">U</div><div class="mval">${r.U.toFixed(0)}</div></div><div class="metric"><div class="mlbl">Z</div><div class="mval">${r.z.toFixed(4)}</div></div><div class="metric"><div class="mlbl">p-valor</div><div class="mval">${pstr(r.p)}</div></div>`;}
+  else if(t==='Kruskal-Wallis'){const g3=pGrp('np-g3');const r=kruskal(...(g3?[g1,g2,g3]:[g1,g2]));p=r.p;h+=`<div class="metric"><div class="mlbl">H</div><div class="mval">${r.H.toFixed(4)}</div></div><div class="metric"><div class="mlbl">gl</div><div class="mval">${r.df}</div></div><div class="metric"><div class="mlbl">p-valor</div><div class="mval">${pstr(r.p)}</div></div>`;}
+  else{if(g1.length!==g2.length){alert('Grupos deben tener igual tamaño');return;}const r=wilcox(g1,g2);p=r.p;h+=`<div class="metric"><div class="mlbl">W</div><div class="mval">${r.W.toFixed(0)}</div></div><div class="metric"><div class="mlbl">Z</div><div class="mval">${r.z.toFixed(4)}</div></div><div class="metric"><div class="mlbl">p-valor</div><div class="mval">${pstr(r.p)}</div></div>`;}
+  h+='</div>'+sAlert(p);const el=document.getElementById('np-res');el.innerHTML=h;el.classList.add('show');
+}
+
+/* ══ CHI-CUADRADO ════════════════════════════════════════════════ */
+function bldChi(){
+  const r=+document.getElementById('chr').value,c=+document.getElementById('chc').value;
+  document.getElementById('chi-gw').innerHTML=`<div class="chi-grid" style="grid-template-columns:repeat(${c},1fr)">${Array.from({length:r*c},(_,idx)=>`<input type="number" id="chi-${Math.floor(idx/c)}-${idx%c}" value="25" min="0" step="1">`).join('')}</div>`;
+}
+bldChi();
+function calcChi(){
+  const r=+document.getElementById('chr').value,c=+document.getElementById('chc').value;
+  const tbl=Array.from({length:r},(_,i)=>Array.from({length:c},(_,j)=>+document.getElementById(`chi-${i}-${j}`).value||0));
+  const res=chi2ct(tbl);const el=document.getElementById('chi-res');
+  el.innerHTML=mH([{l:'χ²',v:res.chi2.toFixed(4)},{l:'p-valor',v:pstr(res.p)},{l:'gl',v:res.dof}])+sAlert(res.p)+`<div style="margin-top:14px"><div class="ctitle">Frecuencias esperadas</div><table class="tbl">${res.expected.map(row=>'<tr>'+row.map(v=>`<td>${v.toFixed(2)}</td>`).join('')+'</tr>').join('')}</table></div>`;
+  el.classList.add('show');
+}
+
+/* ══ TAMAÑO MUESTRA ══════════════════════════════════════════════ */
+function updNC(){const t=document.querySelector('input[name="nt"]:checked').value;document.getElementById('nm-in').style.display=t==='medias'?'':'none';document.getElementById('np-in2').style.display=t==='prop'?'':'none';}
+function calcN(){
+  const t=document.querySelector('input[name="nt"]:checked').value,a=+document.getElementById('na').value,pot=+document.getElementById('np').value;
+  const za=zp(1-a/2),zb=zp(pot);let n,d;
+  if(t==='medias'){const dt=+document.getElementById('ndelta').value,s=+document.getElementById('nsigma').value;d=dt/s;n=Math.ceil(((za+zb)/d)**2*2);}
+  else{const p1=+document.getElementById('np1').value,p2=+document.getElementById('np2').value,pp=(p1+p2)/2;n=Math.ceil((za*Math.sqrt(2*pp*(1-pp))+zb*Math.sqrt(p1*(1-p1)+p2*(1-p2)))**2/(p1-p2)**2);d=Math.abs(p1-p2)/Math.sqrt(pp*(1-pp));}
+  document.getElementById('n-met').innerHTML=mH([{l:'n por grupo',v:n},{l:'n total',v:2*n},{l:'Potencia',v:`${(pot*100).toFixed(0)}%`},{l:'d Cohen',v:d.toFixed(3)}]);
+  document.getElementById('n-alr').innerHTML=`<div class="alert ai">📐 Efecto: <strong>${effLbl(d)}</strong> (d = ${d.toFixed(3)})</div>`;
+  document.getElementById('n-res').classList.add('show');
+}
+
+/* ══ DISEÑO EXPERIMENTAL ═════════════════════════════════════════ */
+function gDS(mode,dId,dfId,sId){const s=+document.getElementById(sId).value;let d,dl;if(mode==='delta'){dl=+document.getElementById(dId).value;d=dl/s;}else{d=+document.getElementById(dfId).value;dl=d*s;}return{delta:dl,d,sigma:s};}
+function togDCA(){const v=document.querySelector('input[name="dm"]:checked').value==='delta';document.getElementById('dd-row').style.display=v?'':'none';document.getElementById('df-row').style.display=v?'none':'';}
+function togDBCA(){const v=document.querySelector('input[name="bm"]:checked').value==='delta';document.getElementById('bd-row').style.display=v?'':'none';document.getElementById('bf-row').style.display=v?'none':'';}
+function togFA(){const v=document.querySelector('input[name="fam"]:checked').value==='delta';document.getElementById('fad-row').style.display=v?'':'none';document.getElementById('faf-row').style.display=v?'none':'';}
+const PAL=['#4fc3c8','#c8a96e','#5dba8a','#e6854a','#a58bd4','#e87baf','#7bbfe8','#b0d97a','#f0c87a','#78c9b5','#e89090','#9ad4e8'];
+function RR(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();ctx.fill();ctx.stroke();}
+function drDCA(k,n,cv){const cell=56,pad=12,W=k*(cell+pad)+pad,H=n*(cell+pad)+pad+30;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);ctx.textAlign='center';ctx.textBaseline='middle';for(let i=0;i<k;i++)for(let j=0;j<n;j++){const x=pad+i*(cell+pad),y=30+pad+j*(cell+pad);ctx.fillStyle=PAL[i%PAL.length]+'aa';ctx.strokeStyle=PAL[i%PAL.length];ctx.lineWidth=2;RR(ctx,x,y,cell,cell,6);ctx.fillStyle='#fff';ctx.font='bold 11px JetBrains Mono,monospace';ctx.fillText(`T${i+1}`,x+cell/2,y+cell/2-7);ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='10px JetBrains Mono,monospace';ctx.fillText(`R${j+1}`,x+cell/2,y+cell/2+7);}ctx.fillStyle='rgba(200,169,110,.7)';ctx.font='bold 12px Syne,sans-serif';ctx.fillText(`DCA — ${k} trat. × ${n} rép. = ${k*n} u.e.`,W/2,15);}
+function drDBCA(k,n,cv){const cell=50,pad=10,lw=38,W=lw+k*(cell+pad)+pad,H=n*(cell+pad)+pad;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);for(let j=0;j<n;j++){const pm=Array.from({length:k},(_,i)=>i).sort(()=>Math.random()-.5);ctx.fillStyle='rgba(200,169,110,.08)';ctx.strokeStyle='rgba(200,169,110,.3)';ctx.lineWidth=1;ctx.beginPath();ctx.rect(lw,pad+j*(cell+pad),k*(cell+pad),cell);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(200,169,110,.7)';ctx.font='bold 11px Syne,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(`B${j+1}`,lw/2,pad+j*(cell+pad)+cell/2);for(let i=0;i<k;i++){const t=pm[i],x=lw+pad+i*(cell+pad),y=pad+j*(cell+pad);ctx.fillStyle=PAL[t%PAL.length]+'bb';ctx.strokeStyle=PAL[t%PAL.length];ctx.lineWidth=2;RR(ctx,x,y,cell-pad,cell,7);ctx.fillStyle='#fff';ctx.font='bold 11px JetBrains Mono,monospace';ctx.fillText(`T${t+1}`,x+(cell-pad)/2,y+cell/2);}}}
+function drFact(a,b,n,cv){const cell=64,pad=10,W=b*(cell+pad)+pad,H=a*(cell+pad)+pad;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);let idx=0;for(let i=0;i<a;i++)for(let j=0;j<b;j++){const x=pad+j*(cell+pad),y=pad+i*(cell+pad),col=`hsl(${200+idx*(160/(a*b))},60%,45%)`;ctx.fillStyle=col+'cc';ctx.strokeStyle=col;ctx.lineWidth=2;RR(ctx,x,y,cell,cell,8);ctx.fillStyle='#fff';ctx.font='bold 11px JetBrains Mono,monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(`A${i+1}B${j+1}`,x+cell/2,y+cell/2-6);ctx.fillStyle='rgba(255,255,255,.7)';ctx.font='10px JetBrains Mono,monospace';ctx.fillText(`n=${n}`,x+cell/2,y+cell/2+8);idx++;}}
+function calcDCAd(){
+  const mode=document.querySelector('input[name="dm"]:checked').value;
+  const{delta,d}=gDS(mode,'dd','df','ds');
+  const k=+document.getElementById('dk').value,a=+document.getElementById('da').value,pot=+document.getElementById('dp').value;
+  const za=zp(1-a/2),zb=zp(pot);let n=k>2?Math.ceil(2*((za+zb)/d)**2*(1+0.15*(k-2))):Math.ceil(2*((za+zb)/d)**2);n=Math.max(n,3);
+  document.getElementById('dca-out').style.display='';
+  document.getElementById('dca-met').innerHTML=mH([{l:'Réplicas',v:n},{l:'Total u.e.',v:k*n},{l:'gl Error',v:(k-1)*(n-1)},{l:'d Cohen',v:d.toFixed(3)}]);
+  document.getElementById('dca-alr').innerHTML=`<div class="alert as">Con ${n} réplicas detectas Δ con ${(pot*100).toFixed(0)}% potencia. Efecto: <strong>${effLbl(d)}</strong></div>`;
+  document.getElementById('dca-cq').style.display='';drDCA(k,n,document.getElementById('dca-cv'));
+}
+function calcDBCAd(){
+  const mode=document.querySelector('input[name="bm"]:checked').value;
+  const{delta,d}=gDS(mode,'bd','bf','bs');
+  const k=+document.getElementById('bk').value,ef=+document.getElementById('be').value,a=+document.getElementById('ba').value,pot=+document.getElementById('bp').value;
+  const dEf=d/Math.sqrt(1-ef/100),za=zp(1-a/2),zb=zp(pot);
+  let n=k>2?Math.ceil(2*((za+zb)/dEf)**2*(1+0.15*(k-2))):Math.ceil(2*((za+zb)/dEf)**2);n=Math.max(n,3);
+  document.getElementById('dbca-out').style.display='';
+  document.getElementById('dbca-met').innerHTML=mH([{l:'Bloques',v:n},{l:'Parc./bloque',v:k},{l:'Total u.e.',v:k*n},{l:'gl Error',v:(k-1)*(n-1)}]);
+  document.getElementById('dbca-alr').innerHTML=`<div class="alert as">Con ${n} bloques detectas la diferencia con ${(pot*100).toFixed(0)}% potencia. Bloques reducen error ~${ef}%.</div>`;
+  document.getElementById('dbca-cq').style.display='';drDBCA(k,n,document.getElementById('dbca-cv'));
+}
+function calcFAdsgn(){
+  const mode=document.querySelector('input[name="fam"]:checked').value;
+  const{delta,d}=gDS(mode,'fad','faf','fas');
+  const a=+document.getElementById('faa').value,b=+document.getElementById('fab').value,tot=a*b;
+  const al=+document.getElementById('faa2').value,pot=+document.getElementById('fap').value;
+  const za=zp(1-al/2),zb=zp(pot);
+  const n=Math.max(Math.ceil(2*((za+zb)/d)**2*(1+0.20*Math.log(tot))),3);
+  document.getElementById('fa-out').style.display='';
+  document.getElementById('fa-met').innerHTML=mH([{l:'Réplicas (r)',v:n},{l:'Combinaciones',v:tot},{l:'Total u.e.',v:tot*n}]);
+  const gA=a-1,gB=b-1,gAB=(a-1)*(b-1),gE=tot*(n-1);
+  document.getElementById('fa-gl').innerHTML=`<div class="ctitle" style="margin-top:14px">Grados de libertad</div><table class="tbl"><tr><th>Fuente</th><th>gl</th></tr><tr><td>A</td><td>${gA}</td></tr><tr><td>B</td><td>${gB}</td></tr><tr><td>A×B</td><td>${gAB}</td></tr><tr><td>Error</td><td>${gE}</td></tr><tr class="trow"><td>Total</td><td>${gA+gB+gAB+gE+tot-1}</td></tr></table>`;
+  document.getElementById('fa-cq').style.display='';drFact(a,b,n,document.getElementById('fa-cv'));
+}
+
+/* ══ INIT ════════════════════════════════════════════════════════ */
+updAG();
+bldDB();
+initFUI('fdc');
+initFUI('fdb');
+swDE('dca');
+(function(){const s=localStorage.getItem('theme');if(s==='light')toggleTheme();})();
+
+/* ══ SERVICE WORKER ══════════════════════════════════════════════ */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js')
+      .then(r=>console.log('SW registrado:',r.scope))
+      .catch(e=>console.warn('SW error:',e));
+  });
+}
+</script>
+</body>
+</html>
