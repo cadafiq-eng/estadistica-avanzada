@@ -155,20 +155,83 @@ footer a{color:var(--gold-dim);text-decoration:none;}
 </header>
 
 <div class="tab-bar">
-  <button class="tab-btn active" onclick="swT(0)">📊 ANOVA</button>
-  <button class="tab-btn" onclick="swT(1)">🔗 Correlación</button>
-  <button class="tab-btn" onclick="swT(2)">📈 Regresión</button>
-  <button class="tab-btn" onclick="swT(3)">📉 No Paramétricas</button>
-  <button class="tab-btn" onclick="swT(4)">✖ Chi-cuadrado</button>
-  <button class="tab-btn" onclick="swT(5)">🔢 Tamaño de Muestra</button>
-  <button class="tab-btn" onclick="swT(6)">🌱 Diseño Experimental</button>
-  <button class="tab-btn" onclick="swT(7)">🧪 Supuestos</button>
+  <button class="tab-btn active" onclick="swT(0)">🌱 Diseño Experimental</button>
+  <button class="tab-btn" onclick="swT(1)">📊 ANOVA</button>
+  <button class="tab-btn" onclick="swT(2)">🧪 Supuestos</button>
+  <button class="tab-btn" onclick="swT(3)">⚖️ Comparación de Medias</button>
+  <button class="tab-btn" onclick="swT(4)">🔗 Correlación</button>
+  <button class="tab-btn" onclick="swT(5)">📈 Regresión</button>
+  <button class="tab-btn" onclick="swT(6)">📉 No Paramétricas</button>
+  <button class="tab-btn" onclick="swT(7)">✖ Chi-cuadrado</button>
+  <button class="tab-btn" onclick="swT(8)">🔢 Tamaño de Muestra</button>
 </div>
 
 <main>
 
 <!-- P0: ANOVA -->
-<section class="panel active" id="p0">
+<section class="panel active" id="p6">
+  <div class="sh"><h2>Diseño Experimental</h2><p>Calcula réplicas y genera el croquis</p></div>
+  <div class="ibox"><strong>Conexión Δ ↔ d de Cohen:</strong> d = Δ/σ. Ej: Δ=15 kg/ha, σ=10 → d=1.5 (grande).</div>
+  <div class="subtab-bar">
+    <button class="subtab-btn active" id="de-b-dca"  onclick="swDE('dca')"><span class="sticon">🌿</span><span class="stlabel">DCA</span><span class="stdesc">Al Azar</span></button>
+    <button class="subtab-btn"        id="de-b-dbca" onclick="swDE('dbca')"><span class="sticon">🧱</span><span class="stlabel">DBCA</span><span class="stdesc">Bloques</span></button>
+    <button class="subtab-btn"        id="de-b-fact" onclick="swDE('fact')"><span class="sticon">⚡</span><span class="stlabel">Factorial</span><span class="stdesc">A×B×…</span></button>
+  </div>
+  <div id="de-dca">
+    <div class="g2">
+      <div class="card"><div class="ctitle">DCA</div>
+        <div class="fr"><label>Entrada</label><div class="seg"><input type="radio" name="dm" id="dmd" value="delta" checked onchange="togDCA()"><label for="dmd">Por Δ</label><input type="radio" name="dm" id="dmf" value="d" onchange="togDCA()"><label for="dmf">Por d</label></div></div>
+        <div class="fr"><label>k: <span id="dk-v" class="rv">4</span></label><input type="range" id="dk" min="2" max="12" value="4" oninput="document.getElementById('dk-v').textContent=this.value"></div>
+        <div id="dd-row" class="fr"><label>Δ</label><input type="number" id="dd" value="15" min="0.1" step="0.5"></div>
+        <div id="df-row" class="fr" style="display:none"><label>d Cohen</label><input type="number" id="df" value="1.5" min="0.1" step="0.1"></div>
+        <div class="fr"><label>σ</label><input type="number" id="ds" value="10" min="0.1" step="0.5"></div>
+        <div class="g2"><div class="fr"><label>α</label><select id="da"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
+          <div class="fr"><label>Potencia</label><select id="dp"><option value="0.70">0.70</option><option value="0.80" selected>0.80</option><option value="0.90">0.90</option></select></div></div>
+        <button class="btn" onclick="calcDCAd()">⚡ Calcular</button>
+      </div>
+      <div class="card" id="dca-out" style="display:none"><div class="ctitle">Resultados</div><div class="metrics" id="dca-met"></div><div id="dca-alr"></div></div>
+    </div>
+    <div class="card" id="dca-cq" style="display:none"><div class="ctitle">Croquis DCA</div><canvas id="dca-cv" class="cq"></canvas></div>
+  </div>
+  <div id="de-dbca" style="display:none">
+    <div class="g2">
+      <div class="card"><div class="ctitle">DBCA</div>
+        <div class="fr"><label>Entrada</label><div class="seg"><input type="radio" name="bm" id="bmd" value="delta" checked onchange="togDBCA()"><label for="bmd">Por Δ</label><input type="radio" name="bm" id="bmf" value="d" onchange="togDBCA()"><label for="bmf">Por d</label></div></div>
+        <div class="fr"><label>k: <span id="bk-v" class="rv">4</span></label><input type="range" id="bk" min="2" max="12" value="4" oninput="document.getElementById('bk-v').textContent=this.value"></div>
+        <div id="bd-row" class="fr"><label>Δ</label><input type="number" id="bd" value="12" min="0.1" step="0.5"></div>
+        <div id="bf-row" class="fr" style="display:none"><label>d Cohen</label><input type="number" id="bf" value="1.5" min="0.1" step="0.1"></div>
+        <div class="fr"><label>σ</label><input type="number" id="bs" value="8" min="0.1" step="0.5"></div>
+        <div class="fr"><label>Eficiencia bloques (%): <span id="be-v" class="rv">20</span></label><input type="range" id="be" min="0" max="50" value="20" step="5" oninput="document.getElementById('be-v').textContent=this.value"></div>
+        <div class="g2"><div class="fr"><label>α</label><select id="ba"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
+          <div class="fr"><label>Potencia</label><select id="bp"><option value="0.70">0.70</option><option value="0.80" selected>0.80</option><option value="0.90">0.90</option></select></div></div>
+        <button class="btn" onclick="calcDBCAd()">⚡ Calcular</button>
+      </div>
+      <div class="card" id="dbca-out" style="display:none"><div class="ctitle">Resultados</div><div class="metrics" id="dbca-met"></div><div id="dbca-alr"></div></div>
+    </div>
+    <div class="card" id="dbca-cq" style="display:none"><div class="ctitle">Croquis DBCA</div><canvas id="dbca-cv" class="cq"></canvas></div>
+  </div>
+  <div id="de-fact" style="display:none">
+    <div class="g2">
+      <div class="card"><div class="ctitle">Factorial (n por combinación)</div>
+        <div class="g2">
+          <div class="fr"><label>Niveles A: <span id="faa-v" class="rv">3</span></label><input type="range" id="faa" min="2" max="6" value="3" oninput="document.getElementById('faa-v').textContent=this.value"></div>
+          <div class="fr"><label>Niveles B: <span id="fab-v" class="rv">4</span></label><input type="range" id="fab" min="2" max="6" value="4" oninput="document.getElementById('fab-v').textContent=this.value"></div>
+        </div>
+        <div class="fr"><label>Entrada</label><div class="seg"><input type="radio" name="fam" id="famd" value="delta" checked onchange="togFA()"><label for="famd">Por Δ</label><input type="radio" name="fam" id="famf" value="d" onchange="togFA()"><label for="famf">Por d</label></div></div>
+        <div id="fad-row" class="fr"><label>Δ</label><input type="number" id="fad" value="10" min="0.1" step="0.5"></div>
+        <div id="faf-row" class="fr" style="display:none"><label>d</label><input type="number" id="faf" value="1.25" min="0.1" step="0.1"></div>
+        <div class="fr"><label>σ</label><input type="number" id="fas" value="8" min="0.1" step="0.5"></div>
+        <div class="g2"><div class="fr"><label>α</label><select id="faa2"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
+          <div class="fr"><label>Potencia</label><select id="fap"><option value="0.70">0.70</option><option value="0.80" selected>0.80</option><option value="0.90">0.90</option></select></div></div>
+        <button class="btn" onclick="calcFAdsgn()">⚡ Calcular</button>
+      </div>
+      <div class="card" id="fa-out" style="display:none"><div class="ctitle">Resultados</div><div class="metrics" id="fa-met"></div><div id="fa-gl"></div></div>
+    </div>
+    <div class="card" id="fa-cq" style="display:none"><div class="ctitle">Matriz Factorial</div><canvas id="fa-cv" class="cq"></canvas></div>
+  </div>
+</section>
+
+<section class="panel" id="p0">
   <div class="sh"><h2>Análisis de Varianza (ANOVA)</h2><p>Ingresa los datos observados para obtener la tabla ANOVA completa</p></div>
   <div class="subtab-bar">
     <button class="subtab-btn active" id="ab-dca"   onclick="swAN('dca')"><span class="sticon">🌿</span><span class="stlabel">DCA</span><span class="stdesc">Un factor</span></button>
@@ -289,9 +352,18 @@ footer a{color:var(--gold-dim);text-decoration:none;}
       <div id="fdb-alr"></div>
     </div>
   </div>
-</section><!-- /p0 ANOVA -->
+</section>
 
-<!-- P1: Correlación -->
+<section class="panel" id="p7">
+  <div class="sh"><h2>Supuestos del ANOVA</h2><p>Normalidad, homogeneidad de varianzas e independencia de los residuales</p></div>
+  <div id="sup-body"></div>
+</section>
+
+<section class="panel" id="p8">
+  <div class="sh"><h2>Comparación de Medias</h2><p>Tukey, DMS, Duncan y Dunnett sobre el último ANOVA calculado</p></div>
+  <div id="cm-body"></div>
+</section>
+
 <section class="panel" id="p1">
   <div class="sh"><h2>Correlación</h2><p>Pearson y Spearman</p></div>
   <div class="g2">
@@ -307,7 +379,6 @@ footer a{color:var(--gold-dim);text-decoration:none;}
   </div>
 </section>
 
-<!-- P2: Regresión -->
 <section class="panel" id="p2">
   <div class="sh"><h2>Regresión Lineal Simple</h2><p>Y = β₀ + β₁X</p></div>
   <div class="g2">
@@ -324,7 +395,6 @@ footer a{color:var(--gold-dim);text-decoration:none;}
   </div>
 </section>
 
-<!-- P3: No Paramétricas -->
 <section class="panel" id="p3">
   <div class="sh"><h2>Pruebas No Paramétricas</h2></div>
   <div class="card">
@@ -335,7 +405,6 @@ footer a{color:var(--gold-dim);text-decoration:none;}
   </div>
 </section>
 
-<!-- P4: Chi-cuadrado -->
 <section class="panel" id="p4">
   <div class="sh"><h2>Chi-cuadrado de Independencia</h2><p>Tabla de contingencia r × c</p></div>
   <div class="card">
@@ -350,7 +419,6 @@ footer a{color:var(--gold-dim);text-decoration:none;}
   </div>
 </section>
 
-<!-- P5: Tamaño muestra -->
 <section class="panel" id="p5">
   <div class="sh"><h2>Calculadora de Tamaño de Muestra</h2></div>
   <div class="mbox">📦 Las <strong>curvas de potencia</strong> se trasladaron a la app <em>Potencia &amp; Tamaño de Muestra</em>.</div>
@@ -365,75 +433,6 @@ footer a{color:var(--gold-dim);text-decoration:none;}
     <button class="btn" onclick="calcN()">⚡ Calcular n</button>
     <div id="n-res" class="rb" style="margin-top:16px"><div class="metrics" id="n-met"></div><div id="n-alr"></div></div>
   </div>
-</section>
-
-<!-- P6: Diseño Experimental -->
-<section class="panel" id="p6">
-  <div class="sh"><h2>Diseño Experimental</h2><p>Calcula réplicas y genera el croquis</p></div>
-  <div class="ibox"><strong>Conexión Δ ↔ d de Cohen:</strong> d = Δ/σ. Ej: Δ=15 kg/ha, σ=10 → d=1.5 (grande).</div>
-  <div class="subtab-bar">
-    <button class="subtab-btn active" id="de-b-dca"  onclick="swDE('dca')"><span class="sticon">🌿</span><span class="stlabel">DCA</span><span class="stdesc">Al Azar</span></button>
-    <button class="subtab-btn"        id="de-b-dbca" onclick="swDE('dbca')"><span class="sticon">🧱</span><span class="stlabel">DBCA</span><span class="stdesc">Bloques</span></button>
-    <button class="subtab-btn"        id="de-b-fact" onclick="swDE('fact')"><span class="sticon">⚡</span><span class="stlabel">Factorial</span><span class="stdesc">A×B×…</span></button>
-  </div>
-  <div id="de-dca">
-    <div class="g2">
-      <div class="card"><div class="ctitle">DCA</div>
-        <div class="fr"><label>Entrada</label><div class="seg"><input type="radio" name="dm" id="dmd" value="delta" checked onchange="togDCA()"><label for="dmd">Por Δ</label><input type="radio" name="dm" id="dmf" value="d" onchange="togDCA()"><label for="dmf">Por d</label></div></div>
-        <div class="fr"><label>k: <span id="dk-v" class="rv">4</span></label><input type="range" id="dk" min="2" max="12" value="4" oninput="document.getElementById('dk-v').textContent=this.value"></div>
-        <div id="dd-row" class="fr"><label>Δ</label><input type="number" id="dd" value="15" min="0.1" step="0.5"></div>
-        <div id="df-row" class="fr" style="display:none"><label>d Cohen</label><input type="number" id="df" value="1.5" min="0.1" step="0.1"></div>
-        <div class="fr"><label>σ</label><input type="number" id="ds" value="10" min="0.1" step="0.5"></div>
-        <div class="g2"><div class="fr"><label>α</label><select id="da"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
-          <div class="fr"><label>Potencia</label><select id="dp"><option value="0.70">0.70</option><option value="0.80" selected>0.80</option><option value="0.90">0.90</option></select></div></div>
-        <button class="btn" onclick="calcDCAd()">⚡ Calcular</button>
-      </div>
-      <div class="card" id="dca-out" style="display:none"><div class="ctitle">Resultados</div><div class="metrics" id="dca-met"></div><div id="dca-alr"></div></div>
-    </div>
-    <div class="card" id="dca-cq" style="display:none"><div class="ctitle">Croquis DCA</div><canvas id="dca-cv" class="cq"></canvas></div>
-  </div>
-  <div id="de-dbca" style="display:none">
-    <div class="g2">
-      <div class="card"><div class="ctitle">DBCA</div>
-        <div class="fr"><label>Entrada</label><div class="seg"><input type="radio" name="bm" id="bmd" value="delta" checked onchange="togDBCA()"><label for="bmd">Por Δ</label><input type="radio" name="bm" id="bmf" value="d" onchange="togDBCA()"><label for="bmf">Por d</label></div></div>
-        <div class="fr"><label>k: <span id="bk-v" class="rv">4</span></label><input type="range" id="bk" min="2" max="12" value="4" oninput="document.getElementById('bk-v').textContent=this.value"></div>
-        <div id="bd-row" class="fr"><label>Δ</label><input type="number" id="bd" value="12" min="0.1" step="0.5"></div>
-        <div id="bf-row" class="fr" style="display:none"><label>d Cohen</label><input type="number" id="bf" value="1.5" min="0.1" step="0.1"></div>
-        <div class="fr"><label>σ</label><input type="number" id="bs" value="8" min="0.1" step="0.5"></div>
-        <div class="fr"><label>Eficiencia bloques (%): <span id="be-v" class="rv">20</span></label><input type="range" id="be" min="0" max="50" value="20" step="5" oninput="document.getElementById('be-v').textContent=this.value"></div>
-        <div class="g2"><div class="fr"><label>α</label><select id="ba"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
-          <div class="fr"><label>Potencia</label><select id="bp"><option value="0.70">0.70</option><option value="0.80" selected>0.80</option><option value="0.90">0.90</option></select></div></div>
-        <button class="btn" onclick="calcDBCAd()">⚡ Calcular</button>
-      </div>
-      <div class="card" id="dbca-out" style="display:none"><div class="ctitle">Resultados</div><div class="metrics" id="dbca-met"></div><div id="dbca-alr"></div></div>
-    </div>
-    <div class="card" id="dbca-cq" style="display:none"><div class="ctitle">Croquis DBCA</div><canvas id="dbca-cv" class="cq"></canvas></div>
-  </div>
-  <div id="de-fact" style="display:none">
-    <div class="g2">
-      <div class="card"><div class="ctitle">Factorial (n por combinación)</div>
-        <div class="g2">
-          <div class="fr"><label>Niveles A: <span id="faa-v" class="rv">3</span></label><input type="range" id="faa" min="2" max="6" value="3" oninput="document.getElementById('faa-v').textContent=this.value"></div>
-          <div class="fr"><label>Niveles B: <span id="fab-v" class="rv">4</span></label><input type="range" id="fab" min="2" max="6" value="4" oninput="document.getElementById('fab-v').textContent=this.value"></div>
-        </div>
-        <div class="fr"><label>Entrada</label><div class="seg"><input type="radio" name="fam" id="famd" value="delta" checked onchange="togFA()"><label for="famd">Por Δ</label><input type="radio" name="fam" id="famf" value="d" onchange="togFA()"><label for="famf">Por d</label></div></div>
-        <div id="fad-row" class="fr"><label>Δ</label><input type="number" id="fad" value="10" min="0.1" step="0.5"></div>
-        <div id="faf-row" class="fr" style="display:none"><label>d</label><input type="number" id="faf" value="1.25" min="0.1" step="0.1"></div>
-        <div class="fr"><label>σ</label><input type="number" id="fas" value="8" min="0.1" step="0.5"></div>
-        <div class="g2"><div class="fr"><label>α</label><select id="faa2"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
-          <div class="fr"><label>Potencia</label><select id="fap"><option value="0.70">0.70</option><option value="0.80" selected>0.80</option><option value="0.90">0.90</option></select></div></div>
-        <button class="btn" onclick="calcFAdsgn()">⚡ Calcular</button>
-      </div>
-      <div class="card" id="fa-out" style="display:none"><div class="ctitle">Resultados</div><div class="metrics" id="fa-met"></div><div id="fa-gl"></div></div>
-    </div>
-    <div class="card" id="fa-cq" style="display:none"><div class="ctitle">Matriz Factorial</div><canvas id="fa-cv" class="cq"></canvas></div>
-  </div>
-</section>
-
-<!-- P7: Supuestos -->
-<section class="panel" id="p7">
-  <div class="sh"><h2>Supuestos del ANOVA</h2><p>Normalidad, homogeneidad de varianzas e independencia de los residuales</p></div>
-  <div id="sup-body"></div>
 </section>
 
 </main>
@@ -487,7 +486,7 @@ const ct=()=>isDark?'#666880':'#9a9080';
 
 /* ══ NAVIGATION ══════════════════════════════════════════════════ */
 const panels=document.querySelectorAll('.panel'),tabBtns=document.querySelectorAll('.tab-btn');
-function swT(i){panels.forEach((p,j)=>p.classList.toggle('active',j===i));tabBtns.forEach((b,j)=>b.classList.toggle('active',j===i));if(i===7)renderSupuestos();}
+function swT(i){panels.forEach((p,j)=>p.classList.toggle('active',j===i));tabBtns.forEach((b,j)=>b.classList.toggle('active',j===i));if(i===2)renderSupuestos();if(i===3)renderComparacionMedias();}
 function swAN(w){['dca','dbca','fdca','fdbca'].forEach(id=>{document.getElementById('an-'+id).classList.toggle('active',id===w);document.getElementById('ab-'+id).classList.toggle('active',id===w);});}
 function swDE(w){['dca','dbca','fact'].forEach(id=>{document.getElementById('de-'+id).style.display=id===w?'':'none';document.getElementById('de-b-'+id).classList.toggle('active',id===w);});}
 
@@ -706,7 +705,10 @@ function calcFDCA(){
   LAST_RESID={design:`Factorial DCA (${f.map(fi=>fi.name).join('×')})`,dfError:dfE,mse:MSE,
     residuals:groups.flat(),
     fitted:allC.flatMap((c,ci)=>{const v=Array.from({length:nR},(_,j)=>+document.getElementById(`fdc-c${ci}-${j}`)?.value||0);const m=mean(v);return v.map(()=>m);}),
-    groups};
+    groups,
+    names:allC.map(c=>c.map((lvl,fi)=>`${f[fi].name}${lvl+1}`).join('')),
+    means:allC.map((c,ci)=>mean(Array.from({length:nR},(_,j)=>+document.getElementById(`fdc-c${ci}-${j}`)?.value||0))),
+    ns:Array(allC.length).fill(nR)};
 }
 
 /* ══ CALCULATE FACTORIAL DBCA ═════════════════════════════════════ */
@@ -730,7 +732,10 @@ function calcFDBCA(){
   LAST_RESID={design:`Factorial DBCA (${f.map(fi=>fi.name).join('×')})`,dfError:dfE,mse:MSE,
     residuals:groups.flat(),
     fitted:allC.flatMap((c,ci)=>Array.from({length:rB},(_,b)=>blockMean[b]+cellMean[ci]-gm2)),
-    groups};
+    groups,
+    names:allC.map(c=>c.map((lvl,fi)=>`${f[fi].name}${lvl+1}`).join('')),
+    means:cellMean,
+    ns:Array(allC.length).fill(rB)};
 }
 
 function showFRes(p,f,res,SSE,dfE,MSE,SSTot,dfTot,SSBlk,dfB,MSBlk,FBlk,pBlk){
@@ -787,7 +792,10 @@ function calcAov(){
   LAST_RESID={design:'DCA (un factor)',dfError:dfW,mse:msW,
     residuals:groups.flat(),
     fitted:gs.flatMap(g=>{const m=mean(g);return g.map(()=>m);}),
-    groups};
+    groups,
+    names:Array.from({length:k},(_,i)=>`Tratamiento ${i+1}`),
+    means:gs.map(mean),
+    ns:gs.map(g=>g.length)};
 }
 
 /* ══ ANOVA DBCA (one-way) ═════════════════════════════════════════ */
@@ -822,7 +830,10 @@ function calcDB(){
   LAST_RESID={design:'DBCA (un factor + bloques)',dfError:dfE,mse:MSE2,
     residuals:residM.flat(),
     fitted:data.map((row,i)=>row.map((v,j)=>tM[i]+bM[j]-gm)).flat(),
-    groups:residM};
+    groups:residM,
+    names:Array.from({length:k},(_,i)=>`T${i+1}`),
+    means:tM,
+    ns:Array(k).fill(r)};
 }
 
 /* ══ CORRELACIÓN ═════════════════════════════════════════════════ */
@@ -1068,6 +1079,242 @@ function renderSupuestos(){
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{labels:{color:ct(),font:{family:'JetBrains Mono',size:11}}}},
       scales:{x:{title:{display:true,text:'Valor ajustado',color:ct()},ticks:{color:ct()},grid:{color:cg()}},y:{title:{display:true,text:'Residual',color:ct()},ticks:{color:ct()},grid:{color:cg()}}}}});
+}
+
+/* ══ COMPARACIÓN DE MEDIAS ═══════════════════════════════════════
+   Tukey (HSD), DMS (LSD de Fisher), Duncan, Dunnett (vs. control).
+   Valores críticos calculados numéricamente (integración de la
+   distribución del rango studentizado y del máximo t equicorrelacionado
+   de Dunnett), no interpolados de tablas impresas — validados contra
+   valores de tabla estándar antes de integrarse (ver nota al pie).
+═══════════════════════════════════════════════════════════════════*/
+function cmErf(x){
+  const sign=x<0?-1:1; x=Math.abs(x);
+  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  const t=1/(1+p*x);
+  const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+  return sign*y;
+}
+const cmPnorm=x=>0.5*(1+cmErf(x/Math.SQRT2));
+const cmDnorm=x=>Math.exp(-x*x/2)/Math.sqrt(2*Math.PI);
+function cmLgamma(x){
+  const g=7;
+  const c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,
+    -176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if(x<0.5) return Math.log(Math.PI/Math.sin(Math.PI*x))-cmLgamma(1-x);
+  x-=1; let a=c[0]; const t=x+g+0.5;
+  for(let i=1;i<g+2;i++) a+=c[i]/(x+i);
+  return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(a);
+}
+function cmBetacf(x,a,b){
+  const MAXIT=200,EPS=3e-9,FPMIN=1e-30;
+  const qab=a+b,qap=a+1,qam=a-1;
+  let c=1,d=1-qab*x/qap;
+  if(Math.abs(d)<FPMIN) d=FPMIN; d=1/d; let h=d;
+  for(let m=1;m<=MAXIT;m++){
+    const m2=2*m;
+    let aa=m*(b-m)*x/((qam+m2)*(a+m2));
+    d=1+aa*d; if(Math.abs(d)<FPMIN)d=FPMIN;
+    c=1+aa/c; if(Math.abs(c)<FPMIN)c=FPMIN;
+    d=1/d; h*=d*c;
+    aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
+    d=1+aa*d; if(Math.abs(d)<FPMIN)d=FPMIN;
+    c=1+aa/c; if(Math.abs(c)<FPMIN)c=FPMIN;
+    d=1/d; const del=d*c; h*=del;
+    if(Math.abs(del-1)<EPS) break;
+  }
+  return h;
+}
+function cmBetai(x,a,b){
+  if(x<=0) return 0; if(x>=1) return 1;
+  const bt=Math.exp(cmLgamma(a+b)-cmLgamma(a)-cmLgamma(b)+a*Math.log(x)+b*Math.log(1-x));
+  if(x<(a+1)/(a+b+2)) return bt*cmBetacf(x,a,b)/a;
+  return 1-bt*cmBetacf(1-x,b,a)/b;
+}
+function cmPt(t,df){
+  const x=df/(df+t*t); const p=0.5*cmBetai(x,df/2,0.5);
+  return t>0?1-p:p;
+}
+function cmQt(p,df){
+  let lo=-100,hi=100;
+  for(let i=0;i<200;i++){ const mid=(lo+hi)/2; if(cmPt(mid,df)<p) lo=mid; else hi=mid; }
+  return (lo+hi)/2;
+}
+const CM_GL32=(()=>{
+  const x=[0.0483076656877383,0.1444719615827965,0.2392873622521371,0.3318686022821277,
+    0.4213512761306353,0.5068999089322294,0.5877157572407623,0.6630442669302152,
+    0.7321821187402897,0.7944837959679424,0.8493676137325700,0.8963211557660521,
+    0.9349060759377397,0.9647622555875064,0.9856115115452684,0.9972638618494816];
+  const w=[0.0965400885147278,0.0956387200792749,0.0938443990808046,0.0911738786957639,
+    0.0876520930044038,0.0833119242269467,0.0781938957870703,0.0723457941088485,
+    0.0658222227763618,0.0586840934785355,0.0509980592623762,0.0428358980222267,
+    0.0342738629130214,0.0253920653092621,0.0162743947309057,0.0070186100094701];
+  const nodes=[],weights=[];
+  for(let i=0;i<16;i++){ nodes.push(-x[15-i]); weights.push(w[15-i]); }
+  for(let i=0;i<16;i++){ nodes.push(x[i]); weights.push(w[i]); }
+  return {nodes,weights};
+})();
+function cmIntegrate(f,a,b){
+  const c1=(b-a)/2,c2=(b+a)/2; let s=0;
+  for(let i=0;i<CM_GL32.nodes.length;i++) s+=CM_GL32.weights[i]*f(c2+c1*CM_GL32.nodes[i]);
+  return c1*s;
+}
+function cmPtukeyInf(q,k){
+  return cmIntegrate(u=>k*cmDnorm(u)*Math.pow(cmPnorm(u)-cmPnorm(u-q),k-1), -8,8);
+}
+function cmSdens(s,df){
+  const ldens=(df/2)*Math.log(df/2)-cmLgamma(df/2)+Math.log(2)+(df-1)*Math.log(s)-df*s*s/2;
+  return Math.exp(ldens);
+}
+function cmPtukey(q,k,df){
+  if(df>3000) return cmPtukeyInf(q,k);
+  const Smax=1+8/Math.sqrt(df);
+  return cmIntegrate(s=>cmSdens(s,df)*cmPtukeyInf(q*s,k), 1e-6, Smax);
+}
+function cmQtukey(p,k,df){
+  let lo=0,hi=60;
+  for(let i=0;i<60;i++){ const mid=(lo+hi)/2; if(cmPtukey(mid,k,df)<p) lo=mid; else hi=mid; }
+  return (lo+hi)/2;
+}
+function cmPdunnettInf(d,kp,rho){
+  const sq=Math.sqrt(rho), sq2=Math.sqrt(1-rho);
+  return cmIntegrate(z=>{
+    const upper=cmPnorm((d+z*sq)/sq2), lower=cmPnorm((-d+z*sq)/sq2);
+    return cmDnorm(z)*Math.pow(upper-lower,kp);
+  }, -8,8);
+}
+function cmPdunnett(d,kp,df,rho){
+  if(df>3000) return cmPdunnettInf(d,kp,rho);
+  const Smax=1+8/Math.sqrt(df);
+  return cmIntegrate(s=>cmSdens(s,df)*cmPdunnettInf(d*s,kp,rho), 1e-6, Smax);
+}
+function cmQdunnett(p,kp,df,rho){
+  let lo=0,hi=60;
+  for(let i=0;i<60;i++){ const mid=(lo+hi)/2; if(cmPdunnett(mid,kp,df,rho)<p) lo=mid; else hi=mid; }
+  return (lo+hi)/2;
+}
+
+let cmMethod='tukey', cmControlIdx=0, cmAlpha=0.05;
+function cmCLD(order,sigFn){
+  const groups=[];
+  order.forEach(idx=>{
+    let placed=false;
+    groups.forEach(g=>{ if(g.every(j=>!sigFn(idx,j))){g.push(idx);placed=true;} });
+    if(!placed)groups.push([idx]);
+  });
+  const letters={}; order.forEach(idx=>letters[idx]=[]);
+  groups.forEach((g,gi)=>{ const letter=String.fromCharCode(97+gi); g.forEach(idx=>letters[idx].push(letter)); });
+  const out={}; order.forEach(idx=>out[idx]=letters[idx].join(''));
+  return out;
+}
+function cmSigFn(pairs){ return (a,b)=>{ const pr=pairs.find(p=>(p.i===a&&p.j===b)||(p.i===b&&p.j===a)); return pr?pr.sig:false; }; }
+function cmOrderByMean(){ const r=LAST_RESID; return r.names.map((_,idx)=>idx).sort((a,b)=>r.means[b]-r.means[a]); }
+
+function cmRunTukey(){
+  const r=LAST_RESID,k=r.names.length,qcrit=cmQtukey(1-cmAlpha,k,r.dfError);
+  const pairs=[];
+  for(let i=0;i<k;i++)for(let j=i+1;j<k;j++){
+    const se=Math.sqrt(r.mse*0.5*(1/r.ns[i]+1/r.ns[j])),diff=Math.abs(r.means[i]-r.means[j]),qobs=diff/se,hsd=qcrit*se;
+    pairs.push({i,j,diff,crit:hsd,sig:diff>hsd,pval:1-cmPtukey(qobs,k,r.dfError)});
+  }
+  const order=cmOrderByMean();
+  return {method:'Tukey (HSD)',critLabel:'q crítico',crit:qcrit,pairs,order,cld:cmCLD(order,cmSigFn(pairs))};
+}
+function cmRunLSD(){
+  const r=LAST_RESID,k=r.names.length,tcrit=cmQt(1-cmAlpha/2,r.dfError);
+  const pairs=[];
+  for(let i=0;i<k;i++)for(let j=i+1;j<k;j++){
+    const se=Math.sqrt(r.mse*(1/r.ns[i]+1/r.ns[j])),diff=Math.abs(r.means[i]-r.means[j]),tobs=diff/se,lsd=tcrit*se;
+    pairs.push({i,j,diff,crit:lsd,sig:diff>lsd,pval:2*(1-cmPt(Math.abs(tobs),r.dfError))});
+  }
+  const order=cmOrderByMean();
+  return {method:'DMS (LSD de Fisher)',critLabel:'t crítico',crit:tcrit,pairs,order,cld:cmCLD(order,cmSigFn(pairs))};
+}
+function cmRunDuncan(){
+  const r=LAST_RESID,k=r.names.length,order=cmOrderByMean();
+  const rankOf={}; order.forEach((idx,pos)=>rankOf[idx]=pos);
+  const pairs=[];
+  for(let i=0;i<k;i++)for(let j=i+1;j<k;j++){
+    const distancia=Math.abs(rankOf[i]-rankOf[j])+1;
+    const alphaP=1-Math.pow(1-cmAlpha,distancia-1);
+    const ssrP=cmQtukey(1-alphaP,distancia,r.dfError);
+    const se=Math.sqrt(r.mse*0.5*(1/r.ns[i]+1/r.ns[j])),diff=Math.abs(r.means[i]-r.means[j]),dms=ssrP*se;
+    pairs.push({i,j,diff,crit:dms,sig:diff>dms});
+  }
+  return {method:'Duncan (rango múltiple)',critLabel:null,crit:null,pairs,order,cld:cmCLD(order,cmSigFn(pairs))};
+}
+function cmRunDunnett(){
+  const r=LAST_RESID;
+  const others=r.names.map((_,idx)=>idx).filter(idx=>idx!==cmControlIdx);
+  const kp=others.length,nc=r.ns[cmControlIdx];
+  const rhos=others.map(idx=>nc/(nc+r.ns[idx]));
+  const rhoAvg=rhos.reduce((a,b)=>a+b,0)/rhos.length;
+  const unequalN=others.some(idx=>r.ns[idx]!==r.ns[others[0]])||nc!==r.ns[others[0]];
+  const dcrit=cmQdunnett(1-cmAlpha,kp,r.dfError,rhoAvg);
+  const rows=others.map(idx=>{
+    const se=Math.sqrt(r.mse*(1/r.ns[idx]+1/nc)),diff=r.means[idx]-r.means[cmControlIdx],tobs=Math.abs(diff)/se,margen=dcrit*se;
+    return {idx,diff,crit:margen,sig:Math.abs(diff)>margen,pval:1-cmPdunnett(tobs,kp,r.dfError,rhoAvg)};
+  });
+  return {method:'Dunnett (vs. control)',dcrit,rows,unequalN,rhoAvg};
+}
+
+function cmSwitch(m){ cmMethod=m; renderComparacionMedias(); }
+function renderComparacionMedias(){
+  const el=document.getElementById('cm-body');
+  if(!LAST_RESID){
+    el.innerHTML=`<div class="alert ai">Aún no has calculado un ANOVA. Ve a la pestaña <strong>📊 ANOVA</strong>, calcula uno y vuelve aquí.</div>`;
+    return;
+  }
+  const r=LAST_RESID;
+  if(r.names.length<2){ el.innerHTML=`<div class="alert aw">Se necesitan al menos 2 tratamientos.</div>`; return; }
+  let h=`<div class="ibox"><strong>Fuente:</strong> ${r.design} · gl error = ${r.dfError} · CME = ${r.mse.toFixed(4)}</div>`;
+  h+=`<div class="subtab-bar">
+    <button class="subtab-btn ${cmMethod==='tukey'?'active':''}" onclick="cmSwitch('tukey')"><span class="sticon">🎯</span><span class="stlabel">Tukey</span><span class="stdesc">HSD</span></button>
+    <button class="subtab-btn ${cmMethod==='lsd'?'active':''}" onclick="cmSwitch('lsd')"><span class="sticon">📏</span><span class="stlabel">DMS</span><span class="stdesc">LSD Fisher</span></button>
+    <button class="subtab-btn ${cmMethod==='duncan'?'active':''}" onclick="cmSwitch('duncan')"><span class="sticon">🔀</span><span class="stlabel">Duncan</span><span class="stdesc">Rango múltiple</span></button>
+    <button class="subtab-btn ${cmMethod==='dunnett'?'active':''}" onclick="cmSwitch('dunnett')"><span class="sticon">🎛️</span><span class="stlabel">Dunnett</span><span class="stdesc">vs. control</span></button>
+  </div>`;
+  h+=`<div class="g2" style="margin-bottom:8px">`;
+  h+=`<div class="fr"><label>α</label><select id="cm-alpha" onchange="cmAlpha=+this.value;renderComparacionMedias()">
+    <option value="0.01" ${cmAlpha===0.01?'selected':''}>0.01</option>
+    <option value="0.05" ${cmAlpha===0.05?'selected':''}>0.05</option>
+    <option value="0.10" ${cmAlpha===0.10?'selected':''}>0.10</option></select></div>`;
+  if(cmMethod==='dunnett'){
+    h+=`<div class="fr"><label>Tratamiento control</label><select onchange="cmControlIdx=+this.value;renderComparacionMedias()">`;
+    r.names.forEach((nm,i)=>{ h+=`<option value="${i}" ${i===cmControlIdx?'selected':''}>${nm}</option>`; });
+    h+=`</select></div>`;
+  }
+  h+=`</div><div id="cm-results"></div>`;
+  el.innerHTML=h;
+  renderCMResults();
+}
+function renderCMResults(){
+  const el=document.getElementById('cm-results'),r=LAST_RESID;
+  if(cmMethod==='dunnett'){
+    const res=cmRunDunnett();
+    let h=`<div class="ctitle" style="margin-top:14px">${res.method} · control: ${r.names[cmControlIdx]} · d crítico = ${res.dcrit.toFixed(4)}</div>`;
+    h+=`<table class="tbl"><tr><th>Comparación</th><th>Diferencia</th><th>Margen (d·EE)</th><th>p</th><th>Significancia</th></tr>`;
+    res.rows.forEach(row=>{
+      h+=`<tr><td>${r.names[row.idx]} − ${r.names[cmControlIdx]}</td><td>${row.diff.toFixed(4)}</td><td>${row.crit.toFixed(4)}</td><td>${pstr(row.pval)}</td><td class="${row.sig?'sig':'ns'}">${row.sig?'Significativa *':'No significativa'}</td></tr>`;
+    });
+    h+='</table>';
+    if(res.unequalN) h+=`<div class="alert aw">⚠️ Los tamaños de muestra no son iguales entre tratamientos; el valor crítico usa un ρ promedio (aproximación estándar).</div>`;
+    el.innerHTML=h;
+    return;
+  }
+  const res=cmMethod==='tukey'?cmRunTukey():cmMethod==='lsd'?cmRunLSD():cmRunDuncan();
+  let h=`<div class="ctitle" style="margin-top:14px">${res.method}${res.crit!==null?` · ${res.critLabel} = ${res.crit.toFixed(4)}`:''}</div>`;
+  h+=`<table class="tbl"><tr><th>Comparación</th><th>Diferencia</th><th>Valor crítico</th>${res.pairs[0]&&res.pairs[0].pval!==undefined?'<th>p</th>':''}<th>Significancia</th></tr>`;
+  res.pairs.forEach(p=>{
+    h+=`<tr><td>${r.names[p.i]} − ${r.names[p.j]}</td><td>${p.diff.toFixed(4)}</td><td>${p.crit.toFixed(4)}</td>${p.pval!==undefined?`<td>${pstr(p.pval)}</td>`:''}<td class="${p.sig?'sig':'ns'}">${p.sig?'Significativa *':'No significativa'}</td></tr>`;
+  });
+  h+='</table>';
+  h+=`<div class="ctitle" style="margin-top:18px">Agrupamiento (letras de significancia)</div>`;
+  h+=`<table class="tbl"><tr><th>Tratamiento</th><th>Media</th><th>Grupo</th></tr>`;
+  res.order.forEach(idx=>{ h+=`<tr><td>${r.names[idx]}</td><td>${r.means[idx].toFixed(4)}</td><td><strong style="color:var(--gold)">${res.cld[idx]}</strong></td></tr>`; });
+  h+='</table>';
+  h+=`<p class="phint" style="margin-top:8px">Medias que comparten una letra no difieren significativamente entre sí (α=${cmAlpha}). Revisa también la tabla de comparaciones pareadas para casos límite.</p>`;
+  el.innerHTML=h;
 }
 
 /* ══ INIT ════════════════════════════════════════════════════════ */
