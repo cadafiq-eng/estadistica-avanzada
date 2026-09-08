@@ -162,6 +162,7 @@ footer a{color:var(--gold-dim);text-decoration:none;}
   <button class="tab-btn" onclick="swT(4)">✖ Chi-cuadrado</button>
   <button class="tab-btn" onclick="swT(5)">🔢 Tamaño de Muestra</button>
   <button class="tab-btn" onclick="swT(6)">🌱 Diseño Experimental</button>
+  <button class="tab-btn" onclick="swT(7)">🧪 Supuestos</button>
 </div>
 
 <main>
@@ -429,6 +430,12 @@ footer a{color:var(--gold-dim);text-decoration:none;}
   </div>
 </section>
 
+<!-- P7: Supuestos -->
+<section class="panel" id="p7">
+  <div class="sh"><h2>Supuestos del ANOVA</h2><p>Normalidad, homogeneidad de varianzas e independencia de los residuales</p></div>
+  <div id="sup-body"></div>
+</section>
+
 </main>
 <footer>
   <div style="max-width:700px;margin:0 auto;">
@@ -439,7 +446,6 @@ footer a{color:var(--gold-dim);text-decoration:none;}
       <span style="color:var(--text)">© 2025 <strong>Dr. Luis Antonio Chel-Guerrero</strong></span><br>
       <span style="color:var(--muted);font-size:.8rem">Obra de autoría colaborativa humano–IA</span>
     </p>
-    <!-- CC Badge -->
     <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es" target="_blank"
        title="Creative Commons BY-NC-ND 4.0 Internacional"
        style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;
@@ -481,7 +487,7 @@ const ct=()=>isDark?'#666880':'#9a9080';
 
 /* ══ NAVIGATION ══════════════════════════════════════════════════ */
 const panels=document.querySelectorAll('.panel'),tabBtns=document.querySelectorAll('.tab-btn');
-function swT(i){panels.forEach((p,j)=>p.classList.toggle('active',j===i));tabBtns.forEach((b,j)=>b.classList.toggle('active',j===i));}
+function swT(i){panels.forEach((p,j)=>p.classList.toggle('active',j===i));tabBtns.forEach((b,j)=>b.classList.toggle('active',j===i));if(i===7)renderSupuestos();}
 function swAN(w){['dca','dbca','fdca','fdbca'].forEach(id=>{document.getElementById('an-'+id).classList.toggle('active',id===w);document.getElementById('ab-'+id).classList.toggle('active',id===w);});}
 function swDE(w){['dca','dbca','fact'].forEach(id=>{document.getElementById('de-'+id).style.display=id===w?'':'none';document.getElementById('de-b-'+id).classList.toggle('active',id===w);});}
 
@@ -691,6 +697,16 @@ function calcFDCA(){
     return Array.from({length:nR},(_,j)=>+document.getElementById(`fdc-c${ci}-${j}`)?.value||0);
   });
   showFRes('fdc',f,res,SSE,dfE,MSE,SSTot,dfTot,null,null,null,null,null);
+
+  // captura de residuales para Supuestos
+  const groups=allC.map((c,ci)=>{
+    const v=Array.from({length:nR},(_,j)=>+document.getElementById(`fdc-c${ci}-${j}`)?.value||0);
+    const m=mean(v);return v.map(vi=>vi-m);
+  });
+  LAST_RESID={design:`Factorial DCA (${f.map(fi=>fi.name).join('×')})`,dfError:dfE,mse:MSE,
+    residuals:groups.flat(),
+    fitted:allC.flatMap((c,ci)=>{const v=Array.from({length:nR},(_,j)=>+document.getElementById(`fdc-c${ci}-${j}`)?.value||0);const m=mean(v);return v.map(()=>m);}),
+    groups};
 }
 
 /* ══ CALCULATE FACTORIAL DBCA ═════════════════════════════════════ */
@@ -703,6 +719,18 @@ function calcFDBCA(){
     return +document.getElementById(`fdb-c${ci}-${b}`)?.value||0;
   });
   showFRes('fdb',f,res,SSE,dfE,MSE,SSTot,dfTot,SSBlk,dfB,MSBlk,FBlk,pBlk);
+
+  // captura de residuales para Supuestos (modelo aditivo: bloque + celda)
+  const getVal=(b,ci)=>+document.getElementById(`fdb-c${ci}-${b}`)?.value||0;
+  const allVals=[];for(let b=0;b<rB;b++)for(let ci=0;ci<allC.length;ci++)allVals.push(getVal(b,ci));
+  const gm2=mean(allVals);
+  const cellMean=allC.map((c,ci)=>mean(Array.from({length:rB},(_,b)=>getVal(b,ci))));
+  const blockMean=Array.from({length:rB},(_,b)=>mean(allC.map((c,ci)=>getVal(b,ci))));
+  const groups=allC.map((c,ci)=>Array.from({length:rB},(_,b)=>getVal(b,ci)-(blockMean[b]+cellMean[ci]-gm2)));
+  LAST_RESID={design:`Factorial DBCA (${f.map(fi=>fi.name).join('×')})`,dfError:dfE,mse:MSE,
+    residuals:groups.flat(),
+    fitted:allC.flatMap((c,ci)=>Array.from({length:rB},(_,b)=>blockMean[b]+cellMean[ci]-gm2)),
+    groups};
 }
 
 function showFRes(p,f,res,SSE,dfE,MSE,SSTot,dfTot,SSBlk,dfB,MSBlk,FBlk,pBlk){
@@ -753,6 +781,13 @@ function calcAov(){
   document.getElementById('aov-met').innerHTML=mH([{l:'F',v:F.toFixed(4)},{l:'p-valor',v:pstr(p)},{l:'gl Trat.',v:dfB},{l:'gl Error',v:dfW}]);
   document.getElementById('aov-tbl').innerHTML=anovaT([{l:'Tratamientos',ss:ssB,df:dfB,ms:msB,F,p},{l:'Error',ss:ssW,df:dfW,ms:msW,F:null,p:null},{l:'Total',ss:ssB+ssW,df:dfB+dfW,ms:null,F:null,p:null}]);
   document.getElementById('aov-alr').innerHTML=sAlert(p);
+
+  // captura de residuales para Supuestos
+  const groups=gs.map(g=>{const m=mean(g);return g.map(v=>v-m);});
+  LAST_RESID={design:'DCA (un factor)',dfError:dfW,mse:msW,
+    residuals:groups.flat(),
+    fitted:gs.flatMap(g=>{const m=mean(g);return g.map(()=>m);}),
+    groups};
 }
 
 /* ══ ANOVA DBCA (one-way) ═════════════════════════════════════════ */
@@ -781,6 +816,13 @@ function calcDB(){
   document.getElementById('db-met').innerHTML=mH([{l:'F Tratamientos',v:FT.toFixed(4)},{l:'p Tratamientos',v:pstr(pT)},{l:'F Bloques',v:FB.toFixed(4)},{l:'p Bloques',v:pstr(pB)}]);
   document.getElementById('db-tbl').innerHTML=anovaT([{l:'Bloques',ss:SSBlk,df:dfB,ms:MSB,F:FB,p:pB},{l:'Tratamientos',ss:SSTrt,df:dfT,ms:MST,F:FT,p:pT},{l:'Error',ss:SSE,df:dfE,ms:MSE2,F:null,p:null},{l:'Total',ss:SSTot,df:dfTot,ms:null,F:null,p:null}]);
   document.getElementById('db-alr').innerHTML=sAlert(pT);
+
+  // captura de residuales para Supuestos (modelo aditivo: tratamiento + bloque)
+  const residM=data.map((row,i)=>row.map((v,j)=>v-(tM[i]+bM[j]-gm)));
+  LAST_RESID={design:'DBCA (un factor + bloques)',dfError:dfE,mse:MSE2,
+    residuals:residM.flat(),
+    fitted:data.map((row,i)=>row.map((v,j)=>tM[i]+bM[j]-gm)).flat(),
+    groups:residM};
 }
 
 /* ══ CORRELACIÓN ═════════════════════════════════════════════════ */
@@ -908,6 +950,124 @@ function calcFAdsgn(){
   const gA=a-1,gB=b-1,gAB=(a-1)*(b-1),gE=tot*(n-1);
   document.getElementById('fa-gl').innerHTML=`<div class="ctitle" style="margin-top:14px">Grados de libertad</div><table class="tbl"><tr><th>Fuente</th><th>gl</th></tr><tr><td>A</td><td>${gA}</td></tr><tr><td>B</td><td>${gB}</td></tr><tr><td>A×B</td><td>${gAB}</td></tr><tr><td>Error</td><td>${gE}</td></tr><tr class="trow"><td>Total</td><td>${gA+gB+gAB+gE+tot-1}</td></tr></table>`;
   document.getElementById('fa-cq').style.display='';drFact(a,b,n,document.getElementById('fa-cv'));
+}
+
+/* ══ SUPUESTOS DEL ANOVA ═════════════════════════════════════════
+   Normalidad: Shapiro-Wilk (Royston 1995, algoritmo AS R94)
+   Homogeneidad: Levene (basado en mediana) y Bartlett
+   Ambos validados numéricamente contra scipy.stats antes de integrarse.
+═══════════════════════════════════════════════════════════════════*/
+let LAST_RESID=null, sup1Ch=null, sup2Ch=null, sup3Ch=null;
+function median(a){const s=a.slice().sort((x,y)=>x-y),n=s.length;return n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2;}
+function swPoly(cc,x){let ret=cc[0];if(cc.length>1){let p=x*cc[cc.length-1];for(let j=cc.length-2;j>0;j--)p=(p+cc[j])*x;ret+=p;}return ret;}
+function shapiroWilk(data){
+  const n=data.length;if(n<3)return null;
+  const x=data.slice().sort((a,b)=>a-b),nn2=Math.floor(n/2),a=new Array(nn2+1);
+  const g=[-2.273,0.459],c1=[0,.221157,-.147981,-2.071190,4.434685,-2.706056],c2=[0,.042981,-.293762,-1.752461,5.682633,-3.582633],
+    c3=[.544,-.39978,.025054,-.0006714],c4=[1.3822,-.77857,.062767,-.0020322],c5=[-1.5861,-.31082,-.083751,.0038915],c6=[-.4803,-.082676,.0030302];
+  const an=n;
+  if(n===3){a[1]=0.70710678;}
+  else{
+    const an25=an+.25;let summ2=0;
+    for(let i=1;i<=nn2;i++){a[i]=jStat.normal.inv((i-.375)/an25,0,1);summ2+=a[i]*a[i];}
+    summ2*=2;const ssumm2=Math.sqrt(summ2),rsn=1/Math.sqrt(an);
+    const a1=swPoly(c1,rsn)-a[1]/ssumm2;let i1,fac,a2;
+    if(n>5){i1=3;a2=-a[2]/ssumm2+swPoly(c2,rsn);fac=Math.sqrt((summ2-2*a[1]*a[1]-2*a[2]*a[2])/(1-2*a1*a1-2*a2*a2));a[2]=a2;}
+    else{i1=2;fac=Math.sqrt((summ2-2*a[1]*a[1])/(1-2*a1*a1));}
+    a[1]=a1;for(let k=i1;k<=nn2;k++)a[k]=-a[k]/fac;
+  }
+  const xbar=mean(x);let ssx=0;for(const xi of x)ssx+=(xi-xbar)**2;
+  let sa=0;for(let i=1;i<=nn2;i++)sa+=a[i]*(x[n-i]-x[i-1]);
+  const w=(sa*sa)/ssx;let pw;
+  if(n===3){const pi6=1.90985931710274,stqr=1.04719755119660;pw=pi6*(Math.asin(Math.sqrt(w))-stqr);pw=Math.max(0,Math.min(1,pw));}
+  else{
+    const w1=1-w,y0=Math.log(w1),xx=Math.log(an);let m,s,y=y0;
+    if(n<=11){const gamma=swPoly(g,an);y=-Math.log(gamma-y0);m=swPoly(c3,an);s=Math.exp(swPoly(c4,an));}
+    else{m=swPoly(c5,xx);s=Math.exp(swPoly(c6,xx));}
+    pw=1-jStat.normal.cdf((y-m)/s,0,1);
+  }
+  return{W:w,p:pw};
+}
+function levene(groups){
+  const z=groups.map(g=>{const md=median(g);return g.map(v=>Math.abs(v-md));});
+  const r=fOneway(...z);
+  return{F:r.F,p:r.p};
+}
+function bartlett(groups){
+  const k=groups.length,N=sum(groups.map(g=>g.length));
+  const vars=groups.map(g=>{const m=mean(g);return sum(g.map(v=>(v-m)**2))/(g.length-1);});
+  const sp2=sum(groups.map((g,i)=>(g.length-1)*vars[i]))/(N-k);
+  const num=(N-k)*Math.log(sp2)-sum(groups.map((g,i)=>(g.length-1)*Math.log(vars[i])));
+  const C=1+(1/(3*(k-1)))*(sum(groups.map(g=>1/(g.length-1)))-1/(N-k));
+  const X2=num/C;
+  return{X2,p:1-jStat.chisquare.cdf(X2,k-1)};
+}
+function renderSupuestos(){
+  const el=document.getElementById('sup-body');
+  if(!LAST_RESID){
+    el.innerHTML=`<div class="alert ai">Aún no has calculado un ANOVA. Ve a la pestaña <strong>📊 ANOVA</strong>, calcula uno (DCA, DBCA, Factorial DCA o Factorial DBCA) y vuelve aquí — se evaluará automáticamente sobre esos residuales.</div>`;
+    return;
+  }
+  const r=LAST_RESID;
+  if(r.groups.some(g=>g.length<3)){
+    el.innerHTML=`<div class="alert aw">⚠️ Algún tratamiento tiene menos de 3 repeticiones — Shapiro-Wilk necesita al menos 3 observaciones por grupo para las pruebas de homogeneidad, aunque la normalidad global sí puede evaluarse. Aumenta las repeticiones si puedes.</div>`;
+  }
+  const sw=shapiroWilk(r.residuals);
+  const lev=levene(r.groups);
+  const bart=bartlett(r.groups);
+
+  let h=`<div class="ibox"><strong>Fuente:</strong> ${r.design} · n = ${r.residuals.length} · gl error = ${r.dfError} · CME = ${r.mse.toFixed(4)}</div>`;
+  h+=`<div class="g2">`;
+  h+=`<div class="card"><div class="ctitle">Normalidad — Shapiro-Wilk</div>`;
+  h+=mH([{l:'W',v:sw.W.toFixed(4)},{l:'p-valor',v:pstr(sw.p)}]);
+  h+= sw.p>=0.05
+    ? `<div class="alert as">✅ No hay evidencia de falta de normalidad (p = ${pstr(sw.p)} ≥ 0.05). El supuesto es razonable.</div>`
+    : `<div class="alert aw">⚠️ Los residuales podrían no ser normales (p = ${pstr(sw.p)} &lt; 0.05). Revisa el gráfico Q-Q; considera una transformación o una prueba no paramétrica.</div>`;
+  h+=`<div style="height:280px;position:relative;margin-top:10px"><canvas id="sup-qq"></canvas></div>`;
+  h+=`</div>`;
+  h+=`<div class="card"><div class="ctitle">Homogeneidad de varianzas</div>`;
+  h+=mH([{l:'Levene F',v:lev.F.toFixed(4)},{l:'p (Levene)',v:pstr(lev.p)},{l:'Bartlett χ²',v:bart.X2.toFixed(4)},{l:'p (Bartlett)',v:pstr(bart.p)}]);
+  h+= lev.p>=0.05
+    ? `<div class="alert as">✅ Varianzas homogéneas según Levene (p = ${pstr(lev.p)} ≥ 0.05).</div>`
+    : `<div class="alert aw">⚠️ Varianzas heterogéneas según Levene (p = ${pstr(lev.p)} &lt; 0.05). Considera una transformación de varianza o un ANOVA robusto (Welch).</div>`;
+  h+=`<p class="phint" style="margin-top:8px">Levene (basado en mediana) es más robusto ante no-normalidad; Bartlett es más potente si los residuales sí son normales, pero se distorsiona más fácilmente si no lo son.</p>`;
+  h+=`</div></div>`;
+
+  h+=`<div class="g2">`;
+  h+=`<div class="card"><div class="ctitle">Residuales vs. orden (independencia)</div><div style="height:280px;position:relative"><canvas id="sup-order"></canvas></div><p class="phint" style="margin-top:8px">Busca patrones (tendencias, rachas, ciclos). Una dispersión sin patrón respalda la independencia.</p></div>`;
+  h+=`<div class="card"><div class="ctitle">Residuales vs. valores ajustados</div><div style="height:280px;position:relative"><canvas id="sup-fitted"></canvas></div><p class="phint" style="margin-top:8px">Busca forma de embudo (heterogeneidad) o curvatura (falta de ajuste). Lo esperado es una banda horizontal sin patrón.</p></div>`;
+  h+=`</div>`;
+
+  el.innerHTML=h;
+
+  const sorted=r.residuals.slice().sort((a,b)=>a-b),n=sorted.length;
+  const qq=sorted.map((v,i)=>({x:jStat.normal.inv((i+1-.375)/(n+.25),0,1),y:v}));
+  const sd=Math.sqrt(sum(sorted.map(v=>v*v))/(n-1));
+  const qmin=Math.min(...qq.map(p=>p.x)),qmax=Math.max(...qq.map(p=>p.x));
+  if(sup1Ch)sup1Ch.destroy();
+  sup1Ch=new Chart(document.getElementById('sup-qq').getContext('2d'),{data:{datasets:[
+    {type:'scatter',label:'Residuales',data:qq,pointRadius:4,pointBackgroundColor:'rgba(79,195,200,.55)',pointBorderColor:'rgba(79,195,200,.9)'},
+    {type:'line',label:'Normal teórica',data:[{x:qmin,y:qmin*sd},{x:qmax,y:qmax*sd}],borderColor:'#c8a96e',borderWidth:2,pointRadius:0,tension:0}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:ct(),font:{family:'JetBrains Mono',size:11}}}},
+      scales:{x:{title:{display:true,text:'Cuantil normal teórico',color:ct()},ticks:{color:ct()},grid:{color:cg()}},y:{title:{display:true,text:'Residual ordenado',color:ct()},ticks:{color:ct()},grid:{color:cg()}}}}});
+
+  if(sup2Ch)sup2Ch.destroy();
+  sup2Ch=new Chart(document.getElementById('sup-order').getContext('2d'),{data:{datasets:[
+    {type:'scatter',label:'Residual',data:r.residuals.map((v,i)=>({x:i+1,y:v})),pointRadius:4,pointBackgroundColor:'rgba(200,169,110,.6)',pointBorderColor:'rgba(200,169,110,.9)'},
+    {type:'line',label:'Cero',data:[{x:1,y:0},{x:r.residuals.length,y:0}],borderColor:'rgba(255,255,255,.3)',borderWidth:1,pointRadius:0}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:ct(),font:{family:'JetBrains Mono',size:11}}}},
+      scales:{x:{title:{display:true,text:'Orden',color:ct()},ticks:{color:ct()},grid:{color:cg()}},y:{title:{display:true,text:'Residual',color:ct()},ticks:{color:ct()},grid:{color:cg()}}}}});
+
+  if(sup3Ch)sup3Ch.destroy();
+  const fmin=Math.min(...r.fitted),fmax=Math.max(...r.fitted);
+  sup3Ch=new Chart(document.getElementById('sup-fitted').getContext('2d'),{data:{datasets:[
+    {type:'scatter',label:'Residual',data:r.residuals.map((v,i)=>({x:r.fitted[i],y:v})),pointRadius:4,pointBackgroundColor:'rgba(93,186,138,.6)',pointBorderColor:'rgba(93,186,138,.9)'},
+    {type:'line',label:'Cero',data:[{x:fmin,y:0},{x:fmax,y:0}],borderColor:'rgba(255,255,255,.3)',borderWidth:1,pointRadius:0}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:ct(),font:{family:'JetBrains Mono',size:11}}}},
+      scales:{x:{title:{display:true,text:'Valor ajustado',color:ct()},ticks:{color:ct()},grid:{color:cg()}},y:{title:{display:true,text:'Residual',color:ct()},ticks:{color:ct()},grid:{color:cg()}}}}});
 }
 
 /* ══ INIT ════════════════════════════════════════════════════════ */
