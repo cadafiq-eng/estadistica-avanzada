@@ -1194,7 +1194,7 @@ function cmQdunnett(p,kp,df,rho){
   return (lo+hi)/2;
 }
 
-let cmMethod='tukey', cmControlIdx=0, cmAlpha=0.05;
+let cmMethod='tukey', cmControlIdx=0, cmAlpha=0.05, cmContrasts=[];
 function cmCLD(order,sigFn){
   const groups=[];
   order.forEach(idx=>{
@@ -1257,7 +1257,47 @@ function cmRunDunnett(){
   });
   return {method:'Dunnett (vs. control)',dcrit,rows,unequalN,rhoAvg};
 }
-
+function cmAddContrast(){
+  cmContrasts.push({name:`Contraste ${cmContrasts.length+1}`, coeffs: LAST_RESID.names.map(()=>0)});
+  renderComparacionMedias();
+}
+function cmRemoveContrast(idx){
+  cmContrasts.splice(idx,1);
+  renderComparacionMedias();
+}
+function cmRenderContrastList(){
+  const wrap=document.getElementById('cm-contrast-list');
+  if(!wrap) return;
+  const r=LAST_RESID,cols=Math.min(r.names.length,5);
+  wrap.innerHTML=cmContrasts.map((c,cidx)=>{
+    const coeffsHtml=r.names.map((nm,tidx)=>`<div><label style="font-size:.68rem">${nm}</label><input type="number" step="any" value="${c.coeffs[tidx]||0}" oninput="cmContrasts[${cidx}].coeffs[${tidx}]=parseFloat(this.value)||0;renderCMResults()"></div>`).join('');
+    return `<div class="card" style="margin-bottom:10px">
+      <div class="fr"><label>Nombre</label><input type="text" value="${c.name}" oninput="cmContrasts[${cidx}].name=this.value;renderCMResults()"></div>
+      <div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:8px">${coeffsHtml}</div>
+      <button class="btn bsm bgh" style="margin-top:10px" onclick="cmRemoveContrast(${cidx})">✕ Eliminar</button>
+    </div>`;
+  }).join('');
+}
+function cmRunContrasts(){
+  const r=LAST_RESID;
+  const rows=cmContrasts.map(c=>{
+    const sumC=c.coeffs.reduce((a,b)=>a+(b||0),0);
+    let sumWeighted=0,sumSqOverN=0;
+    r.names.forEach((nm,idx)=>{ const ci=c.coeffs[idx]||0; sumWeighted+=ci*r.means[idx]; sumSqOverN+=(ci*ci)/r.ns[idx]; });
+    const sc=sumSqOverN>0?(sumWeighted*sumWeighted)/sumSqOverN:0;
+    const fobs=sc/r.mse;
+    const tobs=Math.sqrt(fobs)*(sumWeighted<0?-1:1);
+    const pval=2*(1-cmPt(Math.abs(tobs),r.dfError));
+    return {name:c.name,sumC,sc,fobs,pval,sig:pval<cmAlpha};
+  });
+  const orthoPairs=[];
+  for(let i=0;i<cmContrasts.length;i++)for(let j=i+1;j<cmContrasts.length;j++){
+    let s=0;
+    r.names.forEach((nm,idx)=>{ const ci=cmContrasts[i].coeffs[idx]||0, cj=cmContrasts[j].coeffs[idx]||0; s+=(ci*cj)/r.ns[idx]; });
+    orthoPairs.push({a:cmContrasts[i].name,b:cmContrasts[j].name,val:s,ortho:Math.abs(s)<1e-6});
+  }
+  return {rows,orthoPairs};
+}
 function cmSwitch(m){ cmMethod=m; renderComparacionMedias(); }
 function renderComparacionMedias(){
   const el=document.getElementById('cm-body');
@@ -1273,6 +1313,7 @@ function renderComparacionMedias(){
     <button class="subtab-btn ${cmMethod==='lsd'?'active':''}" onclick="cmSwitch('lsd')"><span class="sticon">📏</span><span class="stlabel">DMS</span><span class="stdesc">LSD Fisher</span></button>
     <button class="subtab-btn ${cmMethod==='duncan'?'active':''}" onclick="cmSwitch('duncan')"><span class="sticon">🔀</span><span class="stlabel">Duncan</span><span class="stdesc">Rango múltiple</span></button>
     <button class="subtab-btn ${cmMethod==='dunnett'?'active':''}" onclick="cmSwitch('dunnett')"><span class="sticon">🎛️</span><span class="stlabel">Dunnett</span><span class="stdesc">vs. control</span></button>
+    <button class="subtab-btn ${cmMethod==='contrast'?'active':''}" onclick="cmSwitch('contrast')"><span class="sticon">➕</span><span class="stlabel">Contrastes</span><span class="stdesc">Ortogonales</span></button>
   </div>`;
   h+=`<div class="g2" style="margin-bottom:8px">`;
   h+=`<div class="fr"><label>α</label><select id="cm-alpha" onchange="cmAlpha=+this.value;renderComparacionMedias()">
@@ -1284,12 +1325,37 @@ function renderComparacionMedias(){
     r.names.forEach((nm,i)=>{ h+=`<option value="${i}" ${i===cmControlIdx?'selected':''}>${nm}</option>`; });
     h+=`</select></div>`;
   }
-  h+=`</div><div id="cm-results"></div>`;
+  h+=`</div>`;
+  if(cmMethod==='contrast'){
+    h+=`<div class="card"><div class="ctitle">Definición de contrastes (Σcᵢ = 0)</div><div id="cm-contrast-list"></div>
+      <button class="btn bsm bgh" onclick="cmAddContrast()">+ Agregar contraste</button></div>`;
+  }
+  h+=`<div id="cm-results"></div>`;
   el.innerHTML=h;
+  if(cmMethod==='contrast') cmRenderContrastList();
   renderCMResults();
 }
 function renderCMResults(){
   const el=document.getElementById('cm-results'),r=LAST_RESID;
+  if(cmMethod==='contrast'){
+    if(cmContrasts.length===0){ el.innerHTML=`<div class="alert ai">Agrega al menos un contraste para ver resultados.</div>`; return; }
+    const res=cmRunContrasts();
+    const fcritVal=Math.pow(cmQt(1-cmAlpha/2,r.dfError),2);
+    let h=`<div class="ctitle" style="margin-top:14px">Contrastes ortogonales · F crítico (1, ${r.dfError}) = ${fcritVal.toFixed(4)}</div>`;
+    h+=`<table class="tbl"><tr><th>Contraste</th><th>Σcᵢ</th><th>SC</th><th>F</th><th>p</th><th>Significancia</th></tr>`;
+    res.rows.forEach(row=>{
+      h+=`<tr><td>${row.name}</td><td>${row.sumC.toFixed(3)}</td><td>${row.sc.toFixed(3)}</td><td>${row.fobs.toFixed(3)}</td><td>${pstr(row.pval)}</td><td class="${row.sig?'sig':'ns'}">${row.sig?'Significativa *':'No significativa'}</td></tr>`;
+    });
+    h+='</table>';
+    if(res.rows.some(row=>Math.abs(row.sumC)>1e-6)) h+=`<div class="alert aw">⚠️ Al menos un contraste no cumple Σcᵢ = 0 exactamente — revisa los coeficientes.</div>`;
+    if(res.orthoPairs.length){
+      h+=`<div class="ctitle" style="margin-top:18px">Verificación de ortogonalidad</div><table class="tbl"><tr><th>Par de contrastes</th><th>Σ(cᵢcⱼ/nᵢ)</th><th>¿Ortogonales?</th></tr>`;
+      res.orthoPairs.forEach(o=>{ h+=`<tr><td>${o.a} vs. ${o.b}</td><td>${o.val.toFixed(5)}</td><td class="${o.ortho?'ns':'sig'}">${o.ortho?'Sí':'No'}</td></tr>`; });
+      h+='</table>';
+    }
+    el.innerHTML=h;
+    return;
+  }
   if(cmMethod==='dunnett'){
     const res=cmRunDunnett();
     let h=`<div class="ctitle" style="margin-top:14px">${res.method} · control: ${r.names[cmControlIdx]} · d crítico = ${res.dcrit.toFixed(4)}</div>`;
