@@ -234,6 +234,12 @@ footer a{color:var(--gold-dim);text-decoration:none;}
     <div class="ibox"><strong>Factorial a×b en cuadrado latino.</strong> Las t = a·b combinaciones son los tratamientos de un cuadrado t×t (filas y columnas = dos fuentes de variabilidad). La potencia se calcula con la F no central: λ = n·Σefectos²/σ², donde n es el número de observaciones que promedian cada nivel o celda. Para alcanzar la potencia se replica el <em>cuadrado completo</em>; los gl del error dependen de cómo se replica.</div>
     <div class="g2">
       <div class="card"><div class="ctitle">Factorial en cuadrado latino</div>
+        <div class="fr"><label>Cargar un ejemplo (opcional)</label><select id="clex" onchange="loadCLex(this.value)">
+          <option value="">— Capturar mis propios valores —</option>
+          <option value="1">Ejemplo 1 · 2×2 · recuento microbiano (log UFC/mL)</option>
+          <option value="2">Ejemplo 2 · 2×3 · humedad final de secado (%)</option>
+          <option value="3">Ejemplo 3 · 3×3 · rendimiento de extracción (%)</option></select>
+          <div id="clex-d" style="font-size:.78rem;color:var(--muted);margin-top:6px"></div></div>
         <div class="g2">
           <div class="fr"><label>Niveles de A</label><div class="seg"><input type="radio" name="cla" id="cla2" value="2" checked onchange="clT()"><label for="cla2">2</label><input type="radio" name="cla" id="cla3" value="3" onchange="clT()"><label for="cla3">3</label></div></div>
           <div class="fr"><label>Niveles de B</label><div class="seg"><input type="radio" name="clb" id="clb2" value="2" checked onchange="clT()"><label for="clb2">2</label><input type="radio" name="clb" id="clb3" value="3" onchange="clT()"><label for="clb3">3</label></div></div>
@@ -255,7 +261,7 @@ footer a{color:var(--gold-dim);text-decoration:none;}
         <div class="g2"><div class="fr"><label>α</label><select id="clal"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
           <div class="fr"><label>Potencia</label><select id="clp"><option value="0.70">0.70</option><option value="0.80" selected>0.80</option><option value="0.90">0.90</option></select></div></div>
         <button class="btn" onclick="calcCL()">⚡ Calcular</button>
-        <button class="btn" style="margin-top:8px;background:transparent;border:1px solid var(--gold-dim);color:var(--gold)" onclick="loadCL2C()">🥛 Cargar caso 2C (yogur probiótico)</button>
+
       </div>
       <div class="card" id="cl-out" style="display:none;min-width:0"><div class="ctitle">Resultados</div><div id="cl-met"></div><div id="cl-alr"></div><div id="cl-tab"></div><div id="cl-gl"></div></div>
     </div>
@@ -1020,10 +1026,16 @@ function clLv(n){return +document.querySelector(`input[name="${n}"]:checked`).va
 function clT(){const a=clLv('cla'),b=clLv('clb'),t=a*b;
   document.getElementById('cl-t').textContent=`t = ${t} → ${t}×${t} (${t*t} u.e. por cuadrado)`;}
 function clNum(id){const v=document.getElementById(id).value;return v===''?NaN:+v;}
-function loadCL2C(){
-  document.getElementById('cla2').checked=true;document.getElementById('clb2').checked=true;
-  document.getElementById('cls').value=0.0693;document.getElementById('clda').value=0.10;
-  document.getElementById('cldb').value=0.10;document.getElementById('cldab').value=0.15;
+const CL_EX={
+  '1':{a:2,b:2,s:0.0693,dA:0.10,dB:0.10,dAB:0.15,d:'Respuesta en log₁₀(UFC/mL); σ estimada de un cuadrado piloto 4×4. Diferencias mínimas de 0.10 log para cada factor y 0.15 log entre efectos simples.'},
+  '2':{a:2,b:3,s:1.2,dA:1.5,dB:1.5,dAB:2.0,d:'Respuesta en % de humedad; σ = 1.2 %. Se quiere detectar 1.5 % entre niveles de cada factor y 2.0 % de interacción.'},
+  '3':{a:3,b:3,s:4,dA:5,dB:5,dAB:8,d:'Respuesta en % de rendimiento; σ = 4 %. Ilustra por qué un 3×3 (cuadrado 9×9) rara vez es práctico.'}
+};
+function loadCLex(k){
+  const e=CL_EX[k];document.getElementById('clex-d').textContent=e?e.d:'';if(!e)return;
+  document.getElementById('cla'+e.a).checked=true;document.getElementById('clb'+e.b).checked=true;
+  document.getElementById('cls').value=e.s;document.getElementById('clda').value=e.dA;
+  document.getElementById('cldb').value=e.dB;document.getElementById('cldab').value=e.dAB;
   document.getElementById('clsch').value='fn';document.getElementById('clobj').value='all';
   document.getElementById('clal').value='0.05';document.getElementById('clp').value='0.80';
   clT();calcCL();
