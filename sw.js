@@ -1,5 +1,5 @@
-/* ══ HumAIno® · Estadística Avanzada · Service Worker v4.0 ══ */
-const CACHE = 'hia-stats-v4';
+/* ══ HumAIno® · Estadística Avanzada · Service Worker v5.0 ══ */
+const CACHE = 'hia-stats-v5';
 const ASSETS = [
   '/estadistica-avanzada/',
   '/estadistica-avanzada/index.html',
@@ -23,7 +23,7 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+      Promise.all(keys.filter(k => k.startsWith('hia-stats-') && k !== CACHE).map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
