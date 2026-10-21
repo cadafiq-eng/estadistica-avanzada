@@ -1,5 +1,5 @@
 /* ══ HumAIno® · Estadística Avanzada · Service Worker v5.0 ══ */
-const CACHE = 'hia-stats-v6';
+const CACHE = 'hia-stats-v7';
 const ASSETS = [
   '/estadistica-avanzada/',
   '/estadistica-avanzada/index.html',

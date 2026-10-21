@@ -154,7 +154,7 @@ footer a{color:var(--gold-dim);text-decoration:none;}
   <span class="logo">HumAIno®</span>
   <span style="color:var(--border)">│</span>
   <h1>Análisis Estadístico Avanzado</h1>
-  <span class="badge" style="margin-left:auto">v4.1</span>
+  <span class="badge" style="margin-left:auto">v4.2</span>
   <button class="thbtn" onclick="toggleTheme()"><span id="thi">☀️</span><span id="thl">Claro</span></button>
 </header>
 
@@ -489,7 +489,7 @@ footer a{color:var(--gold-dim);text-decoration:none;}
 <footer>
   <div style="max-width:700px;margin:0 auto;">
     <p style="font-size:.95rem;font-weight:700;color:var(--gold);font-family:var(--ff-h);letter-spacing:.06em;margin-bottom:6px">
-      Análisis Estadístico Avanzado · v4.1
+      Análisis Estadístico Avanzado · v4.2
     </p>
     <p style="margin-bottom:10px">
       <span style="color:var(--text)">© 2025 <strong>Dr. Luis Antonio Chel-Guerrero</strong></span><br>
@@ -785,7 +785,8 @@ function calcFDBCA(){
     groups,
     names:allC.map(c=>c.map((lvl,fi)=>`${f[fi].name}${lvl+1}`).join('')),
     means:cellMean,
-    ns:Array(allC.length).fill(rB)};
+    ns:Array(allC.length).fill(rB),
+    addTable:allC.map((c,ci)=>Array.from({length:rB},(_,b)=>getVal(b,ci)))};
 }
 
 function showFRes(p,f,res,SSE,dfE,MSE,SSTot,dfTot,SSBlk,dfB,MSBlk,FBlk,pBlk){
@@ -883,7 +884,8 @@ function calcDB(){
     groups:residM,
     names:Array.from({length:k},(_,i)=>`T${i+1}`),
     means:tM,
-    ns:Array(k).fill(r)};
+    ns:Array(k).fill(r),
+    addTable:data};
 }
 
 /* ══ CORRELACIÓN ═════════════════════════════════════════════════ */
@@ -1250,6 +1252,44 @@ function bartlett(groups){
   const X2=num/C;
   return{X2,p:1-jStat.chisquare.cdf(X2,k-1)};
 }
+/* ══ PRUEBA DE NO ADITIVIDAD DE TUKEY (1 gl) ══════════════════════
+   Tablas con una observación por celda (tratamientos × bloques).
+   SS_N = [ΣΣ y_ij·α_i·β_j]² / (Σα_i²·Σβ_j²), α_i = ȳi.−ȳ.., β_j = ȳ.j−ȳ..
+   SS_res = SS_E − SS_N, gl = (a−1)(b−1) − 1, F = SS_N / (SS_res/gl)
+   Potencia de transformación sugerida: 1 − k, k = ȳ..·D̂, D̂ = ΣΣ y·α·β / (Σα²·Σβ²)
+   Validada con el ejemplo de impurezas de Montgomery: SS_N = 0.0985, F = 0.36, p = 0.566.
+═══════════════════════════════════════════════════════════════════*/
+function tukeyAdd(Y){
+  const a=Y.length,b=Y[0].length,gm=mean(Y.flat());
+  const al=Y.map(row=>mean(row)-gm),be=Array.from({length:b},(_,j)=>mean(Y.map(row=>row[j]))-gm);
+  let P=0,SSE=0;for(let i=0;i<a;i++)for(let j=0;j<b;j++){P+=Y[i][j]*al[i]*be[j];SSE+=(Y[i][j]-gm-al[i]-be[j])**2;}
+  const sa=sum(al.map(x=>x*x)),sb=sum(be.map(x=>x*x)),df=(a-1)*(b-1)-1;
+  if(df<1||!(sa>0)||!(sb>0))return{ok:false,a,b,df};
+  const SSN=P*P/(sa*sb),SSres=Math.max(SSE-SSN,0),F=SSres>0?SSN/(SSres/df):Infinity,pv=SSres>0?1-jStat.centralF.cdf(F,1,df):0;
+  return{ok:true,a,b,SSN,SSE,SSres,df,F,p:pv,k:gm*P/(sa*sb)};
+}
+function tukeyAddCard(r,alpha,compact){
+  if(!r.addTable){
+    return compact?'':`<div class="card" style="margin-top:16px"><div class="ctitle">Prueba de no aditividad de Tukey (1 gl)</div><p class="phint">Se aplica a diseños con una observación por combinación tratamiento × bloque: DBCA y factorial DBCA. El último ANOVA es un ${r.design}, donde no corresponde: con réplicas dentro de cada celda la interacción se estima directamente.</p></div>`;
+  }
+  const t=tukeyAdd(r.addTable),pT=v=>{const x=pstr(v);return /^[<>]/.test(x)?'p '+x:'p = '+x;};
+  let h=`<div class="card" style="margin-top:16px"><div class="ctitle">Prueba de no aditividad de Tukey (1 gl)</div>`;
+  if(!t.ok)return h+`<div class="alert aw">Se necesitan al menos 3 tratamientos y 2 bloques (o 2 y 3) con variación entre medias para aplicar la prueba.</div></div>`;
+  h+=`<p class="phint">H₀: los efectos de tratamientos y bloques son aditivos (no hay interacción tratamiento × bloque). Tabla de ${t.a} tratamientos × ${t.b} bloques.</p>`;
+  h+=mH([{l:'SS no aditividad',v:t.SSN.toFixed(4)},{l:'F',v:isFinite(t.F)?t.F.toFixed(4):'∞'},{l:'gl',v:`1, ${t.df}`},{l:'p-valor',v:pstr(t.p)}]);
+  h+=`<div style="overflow-x:auto"><table class="tbl"><tr><th>Fuente</th><th>SS</th><th>gl</th><th>CM</th><th>F</th><th>p</th></tr>
+    <tr><td>No aditividad</td><td>${t.SSN.toFixed(4)}</td><td>1</td><td>${t.SSN.toFixed(4)}</td><td>${isFinite(t.F)?t.F.toFixed(4):'∞'}</td><td class="${t.p<alpha?'sig':'ns'}">${pstr(t.p)}</td></tr>
+    <tr class="erow"><td>Residual</td><td>${t.SSres.toFixed(4)}</td><td>${t.df}</td><td>${(t.SSres/t.df).toFixed(4)}</td><td></td><td></td></tr>
+    <tr class="trow"><td>Error del ANOVA</td><td>${t.SSE.toFixed(4)}</td><td>${t.df+1}</td><td></td><td></td><td></td></tr></table></div>`;
+  if(t.p>=alpha){
+    h+=`<div class="alert as"><div>No hay evidencia de no aditividad (${pT(t.p)} ≥ ${alpha}). El modelo aditivo es adecuado y el CME usado en las comparaciones de medias es válido.</div></div>`;
+  }else{
+    const pw=Math.abs(1-t.k)<0.005?0:1-t.k,opts=[[2,'cuadrado'],[1,'sin transformar'],[0.5,'raíz cuadrada'],[0,'logaritmo'],[-0.5,'1/√y'],[-1,'recíproco']];
+    const near=opts.reduce((m,o)=>Math.abs(o[0]-pw)<Math.abs(m[0]-pw)?o:m,opts[0]);
+    h+=`<div class="alert aw"><div>Hay evidencia de no aditividad (${pT(t.p)}; α = ${alpha}): existe interacción tratamiento × bloque. El CME queda inflado y las comparaciones de medias pierden sensibilidad. Potencia de transformación sugerida: 1 − k = ${pw.toFixed(2)}, cercana a <strong>${near[1]}</strong>${near[0]===1?'':' de la respuesta'}. Transforma los datos y repite el ANOVA.</div></div>`;
+  }
+  return h+`</div>`;
+}
 function renderSupuestos(){
   const el=document.getElementById('sup-body');
   if(!LAST_RESID){
@@ -1285,6 +1325,7 @@ function renderSupuestos(){
   h+=`<div class="card"><div class="ctitle">Residuales vs. orden (independencia)</div><div style="height:280px;position:relative"><canvas id="sup-order"></canvas></div><p class="phint" style="margin-top:8px">Busca patrones (tendencias, rachas, ciclos). Una dispersión sin patrón respalda la independencia.</p></div>`;
   h+=`<div class="card"><div class="ctitle">Residuales vs. valores ajustados</div><div style="height:280px;position:relative"><canvas id="sup-fitted"></canvas></div><p class="phint" style="margin-top:8px">Busca forma de embudo (heterogeneidad) o curvatura (falta de ajuste). Lo esperado es una banda horizontal sin patrón.</p></div>`;
   h+=`</div>`;
+  h+=tukeyAddCard(r,0.05,true);
 
   el.innerHTML=h;
 
@@ -1617,6 +1658,7 @@ function renderCMResults(){
   res.order.forEach(idx=>{ h+=`<tr><td>${r.names[idx]}</td><td>${r.means[idx].toFixed(4)}</td><td><strong style="color:var(--gold)">${res.cld[idx]}</strong></td></tr>`; });
   h+='</table>';
   h+=`<p class="phint" style="margin-top:8px">Medias que comparten una letra no difieren significativamente entre sí (α=${cmAlpha}). Revisa también la tabla de comparaciones pareadas para casos límite.</p>`;
+  if(cmMethod==='tukey')h+=tukeyAddCard(r,cmAlpha,false);
   el.innerHTML=h;
 }
 
