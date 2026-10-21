@@ -125,6 +125,10 @@ select option{background:var(--surface2);color:var(--text);}
 /* Info boxes */
 .ibox{background:rgba(200,169,110,.06);border-left:3px solid var(--gold-dim);border-radius:0 8px 8px 0;padding:12px 16px;font-size:.85rem;color:var(--text);margin-bottom:16px;}
 .ibox strong{color:var(--gold);}
+.mini-btn{margin-top:6px;font-family:var(--ff-u);font-size:.74rem;font-weight:600;color:var(--gold);background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;}
+.mini-btn:hover,.mini-btn:focus-visible{border-color:var(--gold-dim);outline:none;}
+.srcnote{font-size:.76rem;color:var(--muted);margin-top:4px;}
+.de-ch{height:280px;position:relative;}
 .mbox{background:rgba(79,195,200,.07);border:1px dashed rgba(79,195,200,.35);border-radius:var(--r);padding:14px 18px;font-size:.85rem;color:var(--cyan);margin-bottom:18px;}
 /* Paste zone */
 .pzone{border:2px dashed var(--border);border-radius:var(--r);background:var(--surface2);padding:14px 16px;}
@@ -141,7 +145,7 @@ canvas.cq{border-radius:8px;display:block;max-width:100%;}
 .flr{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 footer{text-align:center;padding:32px 20px;font-size:.75rem;color:var(--muted);border-top:1px solid var(--border);margin-top:20px;}
 footer a{color:var(--gold-dim);text-decoration:none;}
-@media(max-width:500px){header h1{font-size:1.1rem;}main{padding:18px 14px;}}
+@media(max-width:500px){header{gap:8px;padding:14px 16px;flex-wrap:wrap;}header h1{font-size:1.1rem;min-width:0;}main{padding:18px 14px;}}
 </style>
 </head>
 <body>
@@ -150,7 +154,7 @@ footer a{color:var(--gold-dim);text-decoration:none;}
   <span class="logo">HumAIno®</span>
   <span style="color:var(--border)">│</span>
   <h1>Análisis Estadístico Avanzado</h1>
-  <span class="badge" style="margin-left:auto">v4.0</span>
+  <span class="badge" style="margin-left:auto">v4.1</span>
   <button class="thbtn" onclick="toggleTheme()"><span id="thi">☀️</span><span id="thl">Claro</span></button>
 </header>
 
@@ -171,7 +175,7 @@ footer a{color:var(--gold-dim);text-decoration:none;}
 <!-- P0: ANOVA -->
 <section class="panel active" id="p6">
   <div class="sh"><h2>Diseño Experimental</h2><p>Calcula réplicas y genera el croquis</p></div>
-  <div class="ibox"><strong>Conexión Δ ↔ d de Cohen:</strong> d = Δ/σ. Ej: Δ=15 kg/ha, σ=10 → d=1.5 (grande).</div>
+  <div class="ibox"><strong>Potencia de la prueba F.</strong> En los cuatro diseños la potencia se calcula con la distribución F no central del ANOVA, en la configuración menos favorable (Montgomery): dos medias separadas por la diferencia mínima Δ y las demás en el punto medio. <strong>Δ ↔ d de Cohen:</strong> d = Δ/σ; p. ej., Δ = 15 kg/ha y σ = 10 dan d = 1.5.</div>
   <div class="subtab-bar">
     <button class="subtab-btn active" id="de-b-dca"  onclick="swDE('dca')"><span class="sticon">🌿</span><span class="stlabel">DCA</span><span class="stdesc">Al Azar</span></button>
     <button class="subtab-btn"        id="de-b-dbca" onclick="swDE('dbca')"><span class="sticon">🧱</span><span class="stlabel">DBCA</span><span class="stdesc">Bloques</span></button>
@@ -183,15 +187,16 @@ footer a{color:var(--gold-dim);text-decoration:none;}
       <div class="card"><div class="ctitle">DCA</div>
         <div class="fr"><label>Entrada</label><div class="seg"><input type="radio" name="dm" id="dmd" value="delta" checked onchange="togDCA()"><label for="dmd">Por Δ</label><input type="radio" name="dm" id="dmf" value="d" onchange="togDCA()"><label for="dmf">Por d</label></div></div>
         <div class="fr"><label>k: <span id="dk-v" class="rv">4</span></label><input type="range" id="dk" min="2" max="12" value="4" oninput="document.getElementById('dk-v').textContent=this.value"></div>
-        <div id="dd-row" class="fr"><label>Δ</label><input type="number" id="dd" value="15" min="0.1" step="0.5"></div>
+        <div id="dd-row" class="fr"><label>Δ mínima entre dos tratamientos</label><input type="number" id="dd" value="15" min="0.1" step="0.5"></div>
         <div id="df-row" class="fr" style="display:none"><label>d Cohen</label><input type="number" id="df" value="1.5" min="0.1" step="0.1"></div>
-        <div class="fr"><label>σ</label><input type="number" id="ds" value="10" min="0.1" step="0.5"></div>
+        <div class="fr"><label>σ (desv. est. del error)</label><input type="number" id="ds" value="10" min="0.1" step="0.5"><button type="button" class="mini-btn" onclick="deSigmaAnova('ds','ds-src')">Usar √CME del último ANOVA</button><div class="srcnote" id="ds-src"></div></div>
         <div class="g2"><div class="fr"><label>α</label><select id="da"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
           <div class="fr"><label>Potencia</label><select id="dp"><option value="0.70">0.70</option><option value="0.80" selected>0.80</option><option value="0.90">0.90</option></select></div></div>
         <button class="btn" onclick="calcDCAd()">⚡ Calcular</button>
       </div>
-      <div class="card" id="dca-out" style="display:none"><div class="ctitle">Resultados</div><div class="metrics" id="dca-met"></div><div id="dca-alr"></div></div>
+      <div class="card" id="dca-out" style="display:none;min-width:0"><div class="ctitle">Resultados</div><div id="dca-met"></div><div id="dca-alr"></div><div id="dca-tab"></div><div id="dca-gl"></div></div>
     </div>
+    <div class="card" id="dca-ch-card" style="display:none"><div class="ctitle">Potencia según el número de réplicas</div><div class="de-ch"><canvas id="dca-ch"></canvas></div></div>
     <div class="card" id="dca-cq" style="display:none"><div class="ctitle">Croquis DCA</div><canvas id="dca-cv" class="cq"></canvas></div>
   </div>
   <div id="de-dbca" style="display:none">
@@ -199,35 +204,41 @@ footer a{color:var(--gold-dim);text-decoration:none;}
       <div class="card"><div class="ctitle">DBCA</div>
         <div class="fr"><label>Entrada</label><div class="seg"><input type="radio" name="bm" id="bmd" value="delta" checked onchange="togDBCA()"><label for="bmd">Por Δ</label><input type="radio" name="bm" id="bmf" value="d" onchange="togDBCA()"><label for="bmf">Por d</label></div></div>
         <div class="fr"><label>k: <span id="bk-v" class="rv">4</span></label><input type="range" id="bk" min="2" max="12" value="4" oninput="document.getElementById('bk-v').textContent=this.value"></div>
-        <div id="bd-row" class="fr"><label>Δ</label><input type="number" id="bd" value="12" min="0.1" step="0.5"></div>
+        <div id="bd-row" class="fr"><label>Δ mínima entre dos tratamientos</label><input type="number" id="bd" value="12" min="0.1" step="0.5"></div>
         <div id="bf-row" class="fr" style="display:none"><label>d Cohen</label><input type="number" id="bf" value="1.5" min="0.1" step="0.1"></div>
-        <div class="fr"><label>σ</label><input type="number" id="bs" value="8" min="0.1" step="0.5"></div>
-        <div class="fr"><label>Eficiencia bloques (%): <span id="be-v" class="rv">20</span></label><input type="range" id="be" min="0" max="50" value="20" step="5" oninput="document.getElementById('be-v').textContent=this.value"></div>
+        <div class="fr"><label>σ (desv. est. del error sin bloquear)</label><input type="number" id="bs" value="8" min="0.1" step="0.5"><button type="button" class="mini-btn" onclick="deSigmaAnova('bs','bs-src')">Usar √CME del último ANOVA</button><div class="srcnote" id="bs-src"></div></div>
+        <div class="fr"><label>Reducción de la varianza por bloquear (%): <span id="be-v" class="rv">20</span></label><input type="range" id="be" min="0" max="50" value="20" step="5" oninput="document.getElementById('be-v').textContent=this.value"></div>
         <div class="g2"><div class="fr"><label>α</label><select id="ba"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
           <div class="fr"><label>Potencia</label><select id="bp"><option value="0.70">0.70</option><option value="0.80" selected>0.80</option><option value="0.90">0.90</option></select></div></div>
         <button class="btn" onclick="calcDBCAd()">⚡ Calcular</button>
       </div>
-      <div class="card" id="dbca-out" style="display:none"><div class="ctitle">Resultados</div><div class="metrics" id="dbca-met"></div><div id="dbca-alr"></div></div>
+      <div class="card" id="dbca-out" style="display:none;min-width:0"><div class="ctitle">Resultados</div><div id="dbca-met"></div><div id="dbca-alr"></div><div id="dbca-tab"></div><div id="dbca-gl"></div></div>
     </div>
+    <div class="card" id="dbca-ch-card" style="display:none"><div class="ctitle">Potencia según el número de bloques</div><div class="de-ch"><canvas id="dbca-ch"></canvas></div></div>
     <div class="card" id="dbca-cq" style="display:none"><div class="ctitle">Croquis DBCA</div><canvas id="dbca-cv" class="cq"></canvas></div>
   </div>
   <div id="de-fact" style="display:none">
     <div class="g2">
-      <div class="card"><div class="ctitle">Factorial (n por combinación)</div>
+      <div class="card"><div class="ctitle">Factorial a×b (r réplicas por combinación)</div>
         <div class="g2">
           <div class="fr"><label>Niveles A: <span id="faa-v" class="rv">3</span></label><input type="range" id="faa" min="2" max="6" value="3" oninput="document.getElementById('faa-v').textContent=this.value"></div>
           <div class="fr"><label>Niveles B: <span id="fab-v" class="rv">4</span></label><input type="range" id="fab" min="2" max="6" value="4" oninput="document.getElementById('fab-v').textContent=this.value"></div>
         </div>
-        <div class="fr"><label>Entrada</label><div class="seg"><input type="radio" name="fam" id="famd" value="delta" checked onchange="togFA()"><label for="famd">Por Δ</label><input type="radio" name="fam" id="famf" value="d" onchange="togFA()"><label for="famf">Por d</label></div></div>
-        <div id="fad-row" class="fr"><label>Δ</label><input type="number" id="fad" value="10" min="0.1" step="0.5"></div>
-        <div id="faf-row" class="fr" style="display:none"><label>d</label><input type="number" id="faf" value="1.25" min="0.1" step="0.1"></div>
-        <div class="fr"><label>σ</label><input type="number" id="fas" value="8" min="0.1" step="0.5"></div>
+        <div class="fr"><label>Disposición de las unidades</label><select id="fadis"><option value="dca" selected>Completamente al azar (factorial DCA)</option><option value="dbca">En bloques completos (factorial DBCA)</option></select></div>
+        <div class="fr"><label>σ (desv. est. del error)</label><input type="number" id="fas" value="8" min="0.1" step="0.5"><button type="button" class="mini-btn" onclick="deSigmaAnova('fas','fas-src')">Usar √CME del último ANOVA</button><div class="srcnote" id="fas-src"></div></div>
+        <div class="g2">
+          <div class="fr"><label>δ<sub>A</sub> mínima</label><input type="number" id="fdA" value="10" min="0" step="any"></div>
+          <div class="fr"><label>δ<sub>B</sub> mínima</label><input type="number" id="fdB" value="10" min="0" step="any"></div>
+        </div>
+        <div class="fr"><label>D<sub>A×B</sub> (diferencia entre efectos simples; 0 = no evaluar)</label><input type="number" id="fdAB" value="15" min="0" step="any"></div>
+        <div class="fr"><label>Define el n.º de réplicas</label><select id="faobj"><option value="all" selected>Todos los efectos (A, B y A×B)</option><option value="main">Solo efectos principales (A y B)</option></select></div>
         <div class="g2"><div class="fr"><label>α</label><select id="faa2"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
           <div class="fr"><label>Potencia</label><select id="fap"><option value="0.70">0.70</option><option value="0.80" selected>0.80</option><option value="0.90">0.90</option></select></div></div>
         <button class="btn" onclick="calcFAdsgn()">⚡ Calcular</button>
       </div>
-      <div class="card" id="fa-out" style="display:none"><div class="ctitle">Resultados</div><div class="metrics" id="fa-met"></div><div id="fa-gl"></div></div>
+      <div class="card" id="fa-out" style="display:none;min-width:0"><div class="ctitle">Resultados</div><div id="fa-met"></div><div id="fa-alr"></div><div id="fa-tab"></div><div id="fa-gl"></div></div>
     </div>
+    <div class="card" id="fa-ch-card" style="display:none"><div class="ctitle">Potencia según el número de réplicas</div><div class="de-ch"><canvas id="fa-ch"></canvas></div></div>
     <div class="card" id="fa-cq" style="display:none"><div class="ctitle">Matriz Factorial</div><canvas id="fa-cv" class="cq"></canvas></div>
   </div>
   <div id="de-cl" style="display:none">
@@ -460,7 +471,7 @@ footer a{color:var(--gold-dim);text-decoration:none;}
 
 <section class="panel" id="p5">
   <div class="sh"><h2>Calculadora de Tamaño de Muestra</h2></div>
-  <div class="mbox">📦 Las <strong>curvas de potencia</strong> se trasladaron a la app <em>Potencia &amp; Tamaño de Muestra</em>.</div>
+  <div class="mbox">📦 La <strong>potencia de los diseños</strong> (DCA, DBCA, factorial y factorial en cuadrado latino) está en la pestaña <em>Diseño Experimental</em>. Para potencia de pruebas z, t y de proporciones usa la app <a href="https://cadafiq-eng.github.io/Probabilidad/" target="_blank" rel="noopener" style="color:var(--gold)">Probabilidad y Distribuciones</a>.</div>
   <div class="card">
     <div class="fr"><label>Para</label><div class="seg"><input type="radio" name="nt" id="ntm" value="medias" checked onchange="updNC()"><label for="ntm">Diferencia de Medias</label><input type="radio" name="nt" id="ntp" value="prop" onchange="updNC()"><label for="ntp">Proporciones</label></div></div>
     <div id="nm-in"><div class="g2"><div class="fr"><label>δ</label><input type="number" id="ndelta" value="5" min="0.1" step="0.1"></div><div class="fr"><label>σ</label><input type="number" id="nsigma" value="10" min="0.1" step="0.1"></div></div></div>
@@ -478,7 +489,7 @@ footer a{color:var(--gold-dim);text-decoration:none;}
 <footer>
   <div style="max-width:700px;margin:0 auto;">
     <p style="font-size:.95rem;font-weight:700;color:var(--gold);font-family:var(--ff-h);letter-spacing:.06em;margin-bottom:6px">
-      Análisis Estadístico Avanzado · v4.0
+      Análisis Estadístico Avanzado · v4.1
     </p>
     <p style="margin-bottom:10px">
       <span style="color:var(--text)">© 2025 <strong>Dr. Luis Antonio Chel-Guerrero</strong></span><br>
@@ -961,45 +972,117 @@ function calcN(){
 function gDS(mode,dId,dfId,sId){const s=+document.getElementById(sId).value;let d,dl;if(mode==='delta'){dl=+document.getElementById(dId).value;d=dl/s;}else{d=+document.getElementById(dfId).value;dl=d*s;}return{delta:dl,d,sigma:s};}
 function togDCA(){const v=document.querySelector('input[name="dm"]:checked').value==='delta';document.getElementById('dd-row').style.display=v?'':'none';document.getElementById('df-row').style.display=v?'none':'';}
 function togDBCA(){const v=document.querySelector('input[name="bm"]:checked').value==='delta';document.getElementById('bd-row').style.display=v?'':'none';document.getElementById('bf-row').style.display=v?'none':'';}
-function togFA(){const v=document.querySelector('input[name="fam"]:checked').value==='delta';document.getElementById('fad-row').style.display=v?'':'none';document.getElementById('faf-row').style.display=v?'none':'';}
 const PAL=['#4fc3c8','#c8a96e','#5dba8a','#e6854a','#a58bd4','#e87baf','#7bbfe8','#b0d97a','#f0c87a','#78c9b5','#e89090','#9ad4e8'];
 function RR(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();ctx.fill();ctx.stroke();}
 function drDCA(k,n,cv){const cell=56,pad=12,W=k*(cell+pad)+pad,H=n*(cell+pad)+pad+30;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);ctx.textAlign='center';ctx.textBaseline='middle';for(let i=0;i<k;i++)for(let j=0;j<n;j++){const x=pad+i*(cell+pad),y=30+pad+j*(cell+pad);ctx.fillStyle=PAL[i%PAL.length]+'aa';ctx.strokeStyle=PAL[i%PAL.length];ctx.lineWidth=2;RR(ctx,x,y,cell,cell,6);ctx.fillStyle='#fff';ctx.font='bold 11px JetBrains Mono,monospace';ctx.fillText(`T${i+1}`,x+cell/2,y+cell/2-7);ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='10px JetBrains Mono,monospace';ctx.fillText(`R${j+1}`,x+cell/2,y+cell/2+7);}ctx.fillStyle='rgba(200,169,110,.7)';ctx.font='bold 12px Syne,sans-serif';ctx.fillText(`DCA — ${k} trat. × ${n} rép. = ${k*n} u.e.`,W/2,15);}
 function drDBCA(k,n,cv){const cell=50,pad=10,lw=38,W=lw+k*(cell+pad)+pad,H=n*(cell+pad)+pad;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);for(let j=0;j<n;j++){const pm=Array.from({length:k},(_,i)=>i).sort(()=>Math.random()-.5);ctx.fillStyle='rgba(200,169,110,.08)';ctx.strokeStyle='rgba(200,169,110,.3)';ctx.lineWidth=1;ctx.beginPath();ctx.rect(lw,pad+j*(cell+pad),k*(cell+pad),cell);ctx.fill();ctx.stroke();ctx.fillStyle='rgba(200,169,110,.7)';ctx.font='bold 11px Syne,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(`B${j+1}`,lw/2,pad+j*(cell+pad)+cell/2);for(let i=0;i<k;i++){const t=pm[i],x=lw+pad+i*(cell+pad),y=pad+j*(cell+pad);ctx.fillStyle=PAL[t%PAL.length]+'bb';ctx.strokeStyle=PAL[t%PAL.length];ctx.lineWidth=2;RR(ctx,x,y,cell-pad,cell,7);ctx.fillStyle='#fff';ctx.font='bold 11px JetBrains Mono,monospace';ctx.fillText(`T${t+1}`,x+(cell-pad)/2,y+cell/2);}}}
 function drFact(a,b,n,cv){const cell=64,pad=10,W=b*(cell+pad)+pad,H=a*(cell+pad)+pad;cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);let idx=0;for(let i=0;i<a;i++)for(let j=0;j<b;j++){const x=pad+j*(cell+pad),y=pad+i*(cell+pad),col=`hsl(${200+idx*(160/(a*b))},60%,45%)`;ctx.fillStyle=col+'cc';ctx.strokeStyle=col;ctx.lineWidth=2;RR(ctx,x,y,cell,cell,8);ctx.fillStyle='#fff';ctx.font='bold 11px JetBrains Mono,monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(`A${i+1}B${j+1}`,x+cell/2,y+cell/2-6);ctx.fillStyle='rgba(255,255,255,.7)';ctx.font='10px JetBrains Mono,monospace';ctx.fillText(`n=${n}`,x+cell/2,y+cell/2+8);idx++;}}
+/* ══ POTENCIA EN DCA, DBCA Y FACTORIAL: F no central ══════════════
+   Usa ncfCdf/powF (sección del cuadrado latino), validadas contra scipy.stats.ncf.
+   Configuración menos favorable (Montgomery): dos medias separadas por Δ y las
+   demás en el punto medio → Στ² = Δ²/2.
+   DCA       λ = n·Δ²/(2σ²)                gl = (k−1, k(n−1))
+   DBCA      λ = b·Δ²/(2σ²_b), σ²_b = σ²(1−E)   gl = (k−1, (k−1)(b−1))
+   Factorial λ_A = b·r·δ_A²/(2σ²), λ_B = a·r·δ_B²/(2σ²), λ_AB = r·D²/(4σ²)
+             gl error = ab(r−1) en DCA, (ab−1)(r−1) en bloques
+═══════════════════════════════════════════════════════════════════*/
+const DE_RMAX=50,deCh={};
+const dePct=v=>(v==null||isNaN(v))?'—':v>=0.995?'>99%':(v*100).toFixed(0)+'%';
+function deSigmaAnova(id,srcId){
+  const src=document.getElementById(srcId);
+  if(!LAST_RESID||!(LAST_RESID.mse>0)){src.innerHTML='<span style="color:var(--warn)">Primero calcula un ANOVA en la pestaña ANOVA.</span>';return;}
+  const s=Math.sqrt(LAST_RESID.mse);document.getElementById(id).value=+s.toPrecision(4);
+  let t=`σ = √CME = ${s.toPrecision(4)}, del ${LAST_RESID.design} (${LAST_RESID.dfError} gl de error).`;
+  if(id==='bs'&&/DBCA/.test(LAST_RESID.design)){document.getElementById('be').value=0;document.getElementById('be-v').textContent='0';t+=' Ese CME ya incluye el efecto de los bloques, así que la reducción se puso en 0 %.';}
+  src.textContent=t;
+}
+function deTable(rows,eff,need,pot,uLbl,ue){
+  let h=`<div class="ctitle" style="margin-top:14px">Potencia por número de ${uLbl.toLowerCase()}</div><div style="overflow-x:auto"><table class="tbl"><tr><th>${uLbl}</th><th>u.e.</th><th>gl Error</th>${eff.map(e=>`<th>${e.l}</th>`).join('')}</tr>`;
+  const lim=Math.min(rows.length,Math.max(7,(need?rows.findIndex(q=>q.r===need):0)+2));
+  for(const q of rows.slice(0,lim))h+=`<tr${q.r===need?' style="outline:1px solid var(--success)"':''}><td>${q.r}</td><td>${ue(q.r)}</td><td>${q.e}</td>${eff.map(e=>{const v=q.pw[e.k];return`<td class="${v>=pot?'sig':'ns'}">${dePct(v)}</td>`;}).join('')}</tr>`;
+  return h+'</table></div>';
+}
+function deChart(id,rows,eff,pot,xLbl,need){
+  document.getElementById(id+'-card').style.display='';
+  const lim=Math.min(rows.length,Math.max(8,(need?rows.findIndex(q=>q.r===need):0)+3)),sl=rows.slice(0,lim),lab=sl.map(q=>q.r);
+  if(deCh[id])deCh[id].destroy();
+  deCh[id]=new Chart(document.getElementById(id).getContext('2d'),{type:'line',data:{labels:lab,datasets:[
+    ...eff.map(e=>({label:e.l,data:sl.map(q=>q.pw[e.k]),borderColor:e.c,backgroundColor:e.c,tension:.25,pointRadius:3,borderDash:e.dash||[]})),
+    {label:`Objetivo ${(pot*100).toFixed(0)}%`,data:lab.map(()=>pot),borderColor:'#5dba8a',borderWidth:1.5,borderDash:[3,3],pointRadius:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:ct(),font:{family:'JetBrains Mono',size:11}}}},
+      scales:{x:{title:{display:true,text:xLbl,color:ct()},ticks:{color:ct()},grid:{color:cg()}},
+              y:{min:0,max:1,title:{display:true,text:'Potencia (1−β)',color:ct()},ticks:{color:ct(),callback:v=>(v*100)+'%'},grid:{color:cg()}}}}});
+}
+function deBad(pre,msg){document.getElementById(pre+'-out').style.display='';document.getElementById(pre+'-met').innerHTML='';['tab','gl'].forEach(x=>document.getElementById(pre+'-'+x).innerHTML='');
+  document.getElementById(pre+'-alr').innerHTML=`<div class="alert aw">${msg}</div>`;document.getElementById(pre+'-ch-card').style.display='none';document.getElementById(pre+'-cq').style.display='none';}
+function deGl(rows){let g='<div class="ctitle" style="margin-top:14px">Grados de libertad</div><table class="tbl"><tr><th>Fuente</th><th>gl</th></tr>';
+  for(const[f,v,c]of rows)g+=`<tr${c?` class="${c}"`:''}><td>${f}</td><td>${v}</td></tr>`;return g+'</table>';}
 function calcDCAd(){
   const mode=document.querySelector('input[name="dm"]:checked').value;
-  const{delta,d}=gDS(mode,'dd','df','ds');
-  const k=+document.getElementById('dk').value,a=+document.getElementById('da').value,pot=+document.getElementById('dp').value;
-  const za=zp(1-a/2),zb=zp(pot);let n=k>2?Math.ceil(2*((za+zb)/d)**2*(1+0.15*(k-2))):Math.ceil(2*((za+zb)/d)**2);n=Math.max(n,3);
+  const{delta,d,sigma}=gDS(mode,'dd','df','ds');
+  const k=+document.getElementById('dk').value,al=+document.getElementById('da').value,pot=+document.getElementById('dp').value;
+  if(!(d>0)||!isFinite(d)||!(sigma>0))return deBad('dca','Revisa Δ (o d) y σ: deben ser números mayores que 0.');
+  const rows=[];let need=null;
+  for(let n=2;n<=DE_RMAX;n++){const e=k*(n-1),lam=n*d*d/2,pw=powF(k-1,e,lam,al);rows.push({r:n,e,lam,pw:{T:pw}});if(need===null&&pw>=pot)need=n;}
   document.getElementById('dca-out').style.display='';
-  document.getElementById('dca-met').innerHTML=mH([{l:'Réplicas',v:n},{l:'Total u.e.',v:k*n},{l:'gl Error',v:(k-1)*(n-1)},{l:'d Cohen',v:d.toFixed(3)}]);
-  document.getElementById('dca-alr').innerHTML=`<div class="alert as">Con ${n} réplicas detectas Δ con ${(pot*100).toFixed(0)}% potencia. Efecto: <strong>${effLbl(d)}</strong></div>`;
-  document.getElementById('dca-cq').style.display='';drDCA(k,n,document.getElementById('dca-cv'));
+  if(!need){deBad('dca',`Ni con ${DE_RMAX} réplicas se alcanza ${dePct(pot)} de potencia (d = ${d.toFixed(2)}). Revisa Δ o σ.`);return;}
+  const R=rows[need-2],prev=need>2?rows[need-3]:null;
+  document.getElementById('dca-met').innerHTML=mH([{l:'Réplicas',v:need},{l:'Potencia',v:dePct(R.pw.T)},{l:'Total u.e.',v:k*need},{l:'gl Error',v:R.e}]);
+  document.getElementById('dca-alr').innerHTML=`<div class="alert as">Con ${need} réplicas por tratamiento (${k*need} u.e.) la prueba F detecta una diferencia Δ = ${+delta.toPrecision(4)} entre dos tratamientos con potencia ${dePct(R.pw.T)}${prev?`; con ${need-1} sería ${dePct(prev.pw.T)}`:''}. Efecto: d = ${d.toFixed(2)}, ${effLbl(d)}.</div>`;
+  const eff=[{k:'T',l:'Tratamientos',c:'#4fc3c8'}];
+  document.getElementById('dca-tab').innerHTML=deTable(rows,eff,need,pot,'Réplicas',r=>k*r)+`<div style="font-size:.78rem;color:var(--muted);margin-top:8px">λ = n·Δ²/(2σ²) = ${R.lam.toFixed(2)} con ${need} réplicas; gl = (${k-1}, ${R.e}); α = ${al}.</div>`;
+  document.getElementById('dca-gl').innerHTML=deGl([['Tratamientos',k-1],['Error',R.e,'erow'],['Total',k*need-1,'trow']]);
+  deChart('dca-ch',rows,eff,pot,'Réplicas por tratamiento',need);
+  document.getElementById('dca-cq').style.display='';drDCA(k,need,document.getElementById('dca-cv'));
 }
 function calcDBCAd(){
   const mode=document.querySelector('input[name="bm"]:checked').value;
-  const{delta,d}=gDS(mode,'bd','bf','bs');
-  const k=+document.getElementById('bk').value,ef=+document.getElementById('be').value,a=+document.getElementById('ba').value,pot=+document.getElementById('bp').value;
-  const dEf=d/Math.sqrt(1-ef/100),za=zp(1-a/2),zb=zp(pot);
-  let n=k>2?Math.ceil(2*((za+zb)/dEf)**2*(1+0.15*(k-2))):Math.ceil(2*((za+zb)/dEf)**2);n=Math.max(n,3);
+  const{delta,d,sigma}=gDS(mode,'bd','bf','bs');
+  const k=+document.getElementById('bk').value,ef=+document.getElementById('be').value,al=+document.getElementById('ba').value,pot=+document.getElementById('bp').value;
+  if(!(d>0)||!isFinite(d)||!(sigma>0))return deBad('dbca','Revisa Δ (o d) y σ: deben ser números mayores que 0.');
+  const dEf=d/Math.sqrt(1-ef/100),rows=[];let need=null;
+  for(let b=2;b<=DE_RMAX;b++){const e=(k-1)*(b-1),lam=b*dEf*dEf/2,pw=powF(k-1,e,lam,al);rows.push({r:b,e,lam,pw:{T:pw}});if(need===null&&pw>=pot)need=b;}
   document.getElementById('dbca-out').style.display='';
-  document.getElementById('dbca-met').innerHTML=mH([{l:'Bloques',v:n},{l:'Parc./bloque',v:k},{l:'Total u.e.',v:k*n},{l:'gl Error',v:(k-1)*(n-1)}]);
-  document.getElementById('dbca-alr').innerHTML=`<div class="alert as">Con ${n} bloques detectas la diferencia con ${(pot*100).toFixed(0)}% potencia. Bloques reducen error ~${ef}%.</div>`;
-  document.getElementById('dbca-cq').style.display='';drDBCA(k,n,document.getElementById('dbca-cv'));
+  if(!need){deBad('dbca',`Ni con ${DE_RMAX} bloques se alcanza ${dePct(pot)} de potencia. Revisa Δ, σ o la reducción por bloques.`);return;}
+  const R=rows[need-2],prev=need>2?rows[need-3]:null;
+  document.getElementById('dbca-met').innerHTML=mH([{l:'Bloques',v:need},{l:'Potencia',v:dePct(R.pw.T)},{l:'Total u.e.',v:k*need},{l:'gl Error',v:R.e}]);
+  document.getElementById('dbca-alr').innerHTML=`<div class="alert as">Con ${need} bloques de ${k} parcelas (${k*need} u.e.) la prueba F detecta Δ = ${+delta.toPrecision(4)} con potencia ${dePct(R.pw.T)}${prev?`; con ${need-1} bloques sería ${dePct(prev.pw.T)}`:''}. σ efectiva con bloques = ${(sigma*Math.sqrt(1-ef/100)).toPrecision(3)}.</div>`;
+  const eff=[{k:'T',l:'Tratamientos',c:'#c8a96e'}];
+  document.getElementById('dbca-tab').innerHTML=deTable(rows,eff,need,pot,'Bloques',b=>k*b)+`<div style="font-size:.78rem;color:var(--muted);margin-top:8px">λ = b·Δ²/(2σ²<sub>b</sub>) = ${R.lam.toFixed(2)} con ${need} bloques; σ²<sub>b</sub> = σ²(1 − ${ef}%); gl = (${k-1}, ${R.e}); α = ${al}.</div>`;
+  document.getElementById('dbca-gl').innerHTML=deGl([['Tratamientos',k-1],['Bloques',need-1],['Error',R.e,'erow'],['Total',k*need-1,'trow']]);
+  deChart('dbca-ch',rows,eff,pot,'Número de bloques',need);
+  document.getElementById('dbca-cq').style.display='';drDBCA(k,need,document.getElementById('dbca-cv'));
 }
 function calcFAdsgn(){
-  const mode=document.querySelector('input[name="fam"]:checked').value;
-  const{delta,d}=gDS(mode,'fad','faf','fas');
-  const a=+document.getElementById('faa').value,b=+document.getElementById('fab').value,tot=a*b;
+  const a=+document.getElementById('faa').value,b=+document.getElementById('fab').value,t=a*b;
+  const dis=document.getElementById('fadis').value,obj=document.getElementById('faobj').value;
+  const sig=+document.getElementById('fas').value,dA=clNum('fdA'),dB=clNum('fdB'),dAB=clNum('fdAB');
   const al=+document.getElementById('faa2').value,pot=+document.getElementById('fap').value;
-  const za=zp(1-al/2),zb=zp(pot);
-  const n=Math.max(Math.ceil(2*((za+zb)/d)**2*(1+0.20*Math.log(tot))),3);
+  if(!(sig>0)||[dA,dB,dAB].some(v=>isNaN(v)||v<0))return deBad('fa','Revisa σ (> 0) y las diferencias δ y D (≥ 0).');
+  const eff=[];if(dA>0)eff.push({k:'A',l:'A',c:'#4fc3c8'});if(dB>0)eff.push({k:'B',l:'B',c:'#c8a96e',dash:[6,4]});if(dAB>0&&obj==='all')eff.push({k:'AB',l:'A×B',c:'#e6854a'});
+  if(!eff.length)return deBad('fa','Indica al menos una diferencia mayor que 0.');
+  const s2=sig*sig,rows=[];let need=null;
+  for(let r=2;r<=DE_RMAX;r++){
+    const e=dis==='dca'?t*(r-1):(t-1)*(r-1);
+    const lam={A:b*r*dA*dA/(2*s2),B:a*r*dB*dB/(2*s2),AB:r*dAB*dAB/(4*s2)},df1={A:a-1,B:b-1,AB:(a-1)*(b-1)};
+    const pw={};for(const x of eff)pw[x.k]=powF(df1[x.k],e,lam[x.k],al);
+    rows.push({r,e,lam,pw});if(need===null&&eff.every(x=>pw[x.k]>=pot))need=r;
+  }
   document.getElementById('fa-out').style.display='';
-  document.getElementById('fa-met').innerHTML=mH([{l:'Réplicas (r)',v:n},{l:'Combinaciones',v:tot},{l:'Total u.e.',v:tot*n}]);
-  const gA=a-1,gB=b-1,gAB=(a-1)*(b-1),gE=tot*(n-1);
-  document.getElementById('fa-gl').innerHTML=`<div class="ctitle" style="margin-top:14px">Grados de libertad</div><table class="tbl"><tr><th>Fuente</th><th>gl</th></tr><tr><td>A</td><td>${gA}</td></tr><tr><td>B</td><td>${gB}</td></tr><tr><td>A×B</td><td>${gAB}</td></tr><tr><td>Error</td><td>${gE}</td></tr><tr class="trow"><td>Total</td><td>${gA+gB+gAB+gE+tot-1}</td></tr></table>`;
-  document.getElementById('fa-cq').style.display='';drFact(a,b,n,document.getElementById('fa-cv'));
+  if(!need){deBad('fa',`Ni con ${DE_RMAX} réplicas se alcanza ${dePct(pot)} de potencia en todos los efectos. Revisa σ o las diferencias mínimas.`);return;}
+  const R=rows[need-2],uLbl=dis==='dca'?'Réplicas':'Bloques';
+  document.getElementById('fa-met').innerHTML=mH([{l:uLbl,v:need},{l:'Combinaciones',v:t},{l:'Total u.e.',v:t*need},{l:'gl Error',v:R.e}]);
+  const pr=eff.map(x=>`${x.l} ${dePct(R.pw[x.k])}`).join(', ');
+  let msg=`<div class="alert as">Con ${need} ${uLbl.toLowerCase()} (${t*need} u.e.) la potencia es: ${pr}.</div>`;
+  const wk=eff.reduce((m,x)=>R.pw[x.k]<R.pw[m.k]?x:m,eff[0]);
+  if(eff.length>1)msg+=`<div class="alert ai"><div>📐 El efecto que fija el número de ${uLbl.toLowerCase()} es <strong>${wk.l}</strong>, el más difícil de detectar.${wk.k==='AB'?` Cada media de celda se apoya en ${need} datos, frente a ${b*need} (A) y ${a*need} (B).`:''}</div></div>`;
+  if(dAB>0&&obj==='main'){const pAB=powF((a-1)*(b-1),R.e,R.lam.AB,al);msg+=`<div class="alert aw">Con este número de ${uLbl.toLowerCase()}, la potencia para la interacción A×B sería ${dePct(pAB)}.</div>`;}
+  document.getElementById('fa-alr').innerHTML=msg;
+  document.getElementById('fa-tab').innerHTML=deTable(rows,eff,need,pot,uLbl,r=>t*r)+`<div style="font-size:.78rem;color:var(--muted);margin-top:8px">Con ${need} ${uLbl.toLowerCase()}: λ<sub>A</sub> = ${R.lam.A.toFixed(2)}, λ<sub>B</sub> = ${R.lam.B.toFixed(2)}, λ<sub>A×B</sub> = ${R.lam.AB.toFixed(2)}. Diferencias en unidades de la respuesta; configuración menos favorable (Montgomery). α = ${al}.</div>`;
+  const gl=[['A',a-1],['B',b-1],['A×B',(a-1)*(b-1)]];if(dis==='dbca')gl.push(['Bloques',need-1]);gl.push(['Error',R.e,'erow'],['Total',t*need-1,'trow']);
+  document.getElementById('fa-gl').innerHTML=deGl(gl);
+  deChart('fa-ch',rows,eff,pot,dis==='dca'?'Réplicas por combinación':'Número de bloques',need);
+  document.getElementById('fa-cq').style.display='';drFact(a,b,need,document.getElementById('fa-cv'));
 }
 
 /* ══ FACTORIAL EN CUADRADO LATINO: potencia con F no central ═════
