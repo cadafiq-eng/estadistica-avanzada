@@ -145,6 +145,11 @@ canvas.cq{border-radius:8px;display:block;max-width:100%;}
 .flr{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 footer{text-align:center;padding:32px 20px;font-size:.75rem;color:var(--muted);border-top:1px solid var(--border);margin-top:20px;}
 footer a{color:var(--gold-dim);text-decoration:none;}
+.dz-spec input{min-width:78px;}.dz-spec select{min-width:140px;}.dz-spec input,.dz-spec select{padding:6px 8px;font-size:.82rem;}
+.dz-spec td{vertical-align:top;}.dz-spec input:disabled{opacity:.35;}
+.tbl tr.dz-best td{background:rgba(93,186,138,.12);color:var(--success);font-weight:700;}
+.dz-roles select{min-width:150px;}
+.dz-exp li{margin:4px 0 4px 18px;font-family:var(--ff-m);font-size:.82rem;line-height:1.6;}
 @media(max-width:500px){header{gap:8px;padding:14px 16px;flex-wrap:wrap;}header h1{font-size:1.1rem;min-width:0;}main{padding:18px 14px;}}
 </style>
 </head>
@@ -154,7 +159,7 @@ footer a{color:var(--gold-dim);text-decoration:none;}
   <span class="logo">HumAIno®</span>
   <span style="color:var(--border)">│</span>
   <h1>Análisis Estadístico Avanzado</h1>
-  <span class="badge" style="margin-left:auto">v4.2</span>
+  <span class="badge" style="margin-left:auto">v4.3</span>
   <button class="thbtn" onclick="toggleTheme()"><span id="thi">☀️</span><span id="thl">Claro</span></button>
 </header>
 
@@ -168,6 +173,7 @@ footer a{color:var(--gold-dim);text-decoration:none;}
   <button class="tab-btn" onclick="swT(6)">📉 No Paramétricas</button>
   <button class="tab-btn" onclick="swT(7)">✖ Chi-cuadrado</button>
   <button class="tab-btn" onclick="swT(8)">🔢 Tamaño de Muestra</button>
+  <button class="tab-btn" onclick="swT(9)">🎯 Deseabilidad</button>
 </div>
 
 <main>
@@ -485,11 +491,48 @@ footer a{color:var(--gold-dim);text-decoration:none;}
   </div>
 </section>
 
+<section class="panel" id="p9">
+  <div class="sh"><h2>Deseabilidad · Varias respuestas</h2><p>Elige la condición que mejor equilibra dos o más respuestas (Derringer y Suich, 1980)</p></div>
+  <div class="ibox"><strong>¿Para qué diseños?</strong> DCA, DBCA y factoriales generales (factores con 2 o más niveles, cuantitativos o categóricos): se promedian las réplicas o bloques de cada tratamiento y se calcula la deseabilidad con esas medias. También sirve para superficie de respuesta, mezclas o Taguchi si pegas los valores predichos por tu modelo o software (una fila por condición). Para factoriales 2<sup>k</sup> con modelo ajustado y puntos centrales usa la app <em>DOE 2ᵏ</em>.</div>
+  <div class="card">
+    <div class="ctitle">1 · Datos</div>
+    <div class="pzone"><textarea id="dz-paste" placeholder="Pega aquí la tabla con encabezados: columnas de tratamiento o factores, bloque/réplica (opcional) y dos o más respuestas"></textarea></div>
+    <p class="phint">Una fila por observación (o por condición). Separadores <code>Tab</code> <code>;</code> <code>,</code>. Con <code>;</code> se aceptan decimales con coma.</p>
+    <div class="flr" style="margin-top:10px">
+      <button class="btn bsm" id="dz-read">↙ Leer datos</button>
+      <button class="btn bsm bgh" id="dz-ex">🎲 Ejemplo: factorial 3 × 2</button>
+      <button class="btn bsm bgh" id="dz-clear">✕</button>
+    </div>
+    <div id="dz-roles" style="margin-top:14px"></div>
+  </div>
+  <div class="card" id="dz-speccard" style="display:none">
+    <div class="ctitle">2 · Especificaciones de cada respuesta</div>
+    <div class="mwrap"><table class="tbl dz-spec" id="dz-spec"></table></div>
+    <button class="ctog" id="dz-ftog" style="margin-top:10px"><span class="arr">▶</span> Fórmulas de la deseabilidad</button>
+    <div class="coll" id="dz-fcoll"><div class="ibox" style="margin:0">
+      <strong>Maximizar:</strong> d = 0 si y ≤ L; d = [(y − L)/(T − L)]<sup>s</sup> si L &lt; y &lt; T; d = 1 si y ≥ T.<br>
+      <strong>Minimizar:</strong> d = 1 si y ≤ T; d = [(U − y)/(U − T)]<sup>t</sup> si T &lt; y &lt; U; d = 0 si y ≥ U.<br>
+      <strong>Valor objetivo:</strong> d = [(y − L)/(T − L)]<sup>s</sup> si L ≤ y ≤ T; d = [(U − y)/(U − T)]<sup>t</sup> si T ≤ y ≤ U; d = 0 fuera de [L, U].<br>
+      <strong>Global:</strong> D = (d₁<sup>w₁</sup> · d₂<sup>w₂</sup> ··· d<sub>m</sub><sup>w<sub>m</sub></sup>)<sup>1/Σw</sup>. Si alguna d = 0, entonces D = 0.<br>
+      Exponente 1: cambio lineal; &gt; 1 más exigente; &lt; 1 más tolerante. Los límites L, T y U deben venir de una especificación, norma o preferencia del consumidor, no de los datos.
+    </div></div>
+    <div style="margin-top:14px"><button class="btn" id="dz-calc">⚡ Calcular deseabilidad</button> <button class="btn bsm bgh" id="dz-csv">⤓ CSV</button></div>
+    <div id="dz-msg"></div>
+  </div>
+  <div id="dz-res" class="rb">
+    <div class="metrics" id="dz-met"></div>
+    <div class="card"><div class="ctitle">3 · Deseabilidad por tratamiento (medias)</div><div class="mwrap" id="dz-tbl"></div></div>
+    <div class="card"><div class="ctitle">Deseabilidad global D</div><div class="de-ch"><canvas id="dz-ch"></canvas></div></div>
+    <div class="card" id="dz-exp"></div>
+    <div id="dz-alr"></div>
+  </div>
+</section>
+
 </main>
 <footer>
   <div style="max-width:700px;margin:0 auto;">
     <p style="font-size:.95rem;font-weight:700;color:var(--gold);font-family:var(--ff-h);letter-spacing:.06em;margin-bottom:6px">
-      Análisis Estadístico Avanzado · v4.2
+      Análisis Estadístico Avanzado · v4.3
     </p>
     <p style="margin-bottom:10px">
       <span style="color:var(--text)">© 2025 <strong>Dr. Luis Antonio Chel-Guerrero</strong></span><br>
@@ -1679,5 +1722,167 @@ if('serviceWorker' in navigator){
   });
 }
 </script>
+<script>
+/* ══ DESEABILIDAD (Derringer y Suich, 1980) ═════════════════════ */
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const GOALS={max:'Maximizar',min:'Minimizar',target:'Valor objetivo'};
+const ROLES={trt:'Tratamiento / factor',blk:'Bloque / réplica (se promedia)',resp:'Respuesta',skip:'Ignorar'};
+const f4=v=>(v==null||!isFinite(v)?'—':+v.toFixed(4));
+const f3=v=>(v==null||!isFinite(v)?'—':v.toFixed(3));
+/* ---- funciones de deseabilidad ---- */
+const Dz={
+  check(sp){const ok=v=>typeof v==='number'&&isFinite(v);
+    if(sp.goal==='max'){if(!ok(sp.L)||!ok(sp.T))return'indica L y T';if(!(sp.L<sp.T))return'se requiere L < T';if(!(sp.s>0))return'exponente > 0';}
+    else if(sp.goal==='min'){if(!ok(sp.T)||!ok(sp.U))return'indica T y U';if(!(sp.T<sp.U))return'se requiere T < U';if(!(sp.t>0))return'exponente > 0';}
+    else{if(!ok(sp.L)||!ok(sp.T)||!ok(sp.U))return'indica L, T y U';if(!(sp.L<sp.T&&sp.T<sp.U))return'se requiere L < T < U';if(!(sp.s>0)||!(sp.t>0))return'exponentes > 0';}
+    if(!(sp.w>0))return'importancia > 0';return'';},
+  d(y,sp){if(!isFinite(y))return NaN;const{L,T,U,s,t}=sp;
+    if(sp.goal==='max'){if(y<=L)return 0;if(y>=T)return 1;return Math.pow((y-L)/(T-L),s);}
+    if(sp.goal==='min'){if(y<=T)return 1;if(y>=U)return 0;return Math.pow((U-y)/(U-T),t);}
+    if(y<L||y>U)return 0;return y<=T?Math.pow((y-L)/(T-L),s):Math.pow((U-y)/(U-T),t);},
+  D(ds,ws){let sw=0,sl=0;for(let i=0;i<ds.length;i++){const d=ds[i];if(!isFinite(d))return NaN;if(d<=0)return 0;sw+=ws[i];sl+=ws[i]*Math.log(d);}return Math.exp(sl/sw);},
+  defaults(goal,ys){const lo=Math.min(...ys),hi=Math.max(...ys),r=x=>+x.toPrecision(4);
+    if(goal==='max')return{goal,L:r(lo),T:r(hi),U:NaN,s:1,t:1,w:1};
+    if(goal==='min')return{goal,L:NaN,T:r(lo),U:r(hi),s:1,t:1,w:1};
+    return{goal,L:r(lo),T:r((lo+hi)/2),U:r(hi),s:1,t:1,w:1};},
+  explain(y,sp){const{L,T,U,s,t}=sp,d=Dz.d(y,sp),Y=f4(y),pw=e=>e===1?'':`^${e}`;
+    if(sp.goal==='max'){if(y<=L)return`y = ${Y} ≤ L = ${L} → d = 0`;if(y>=T)return`y = ${Y} ≥ T = ${T} → d = 1`;return`d = [(y − L)/(T − L)]${pw(s)} = [(${Y} − ${L})/(${T} − ${L})]${pw(s)} = ${f4(d)}`;}
+    if(sp.goal==='min'){if(y<=T)return`y = ${Y} ≤ T = ${T} → d = 1`;if(y>=U)return`y = ${Y} ≥ U = ${U} → d = 0`;return`d = [(U − y)/(U − T)]${pw(t)} = [(${U} − ${Y})/(${U} − ${T})]${pw(t)} = ${f4(d)}`;}
+    if(y<L||y>U)return`y = ${Y} fuera de [${L}, ${U}] → d = 0`;
+    return y<=T?`y ≤ T: d = [(y − L)/(T − L)]${pw(s)} = [(${Y} − ${L})/(${T} − ${L})]${pw(s)} = ${f4(d)}`:`y > T: d = [(U − y)/(U − T)]${pw(t)} = [(${U} − ${Y})/(${U} − ${T})]${pw(t)} = ${f4(d)}`;}
+};
+window.DesirCore=Dz;
+/* ---- estado ---- */
+let data=null, roles=[], specs={}, last=null, chart=null;
+const num=s=>{if(s==null)return NaN;const t=String(s).trim().replace(/\s/g,'');if(t==='')return NaN;const v=Number(t);return isFinite(v)?v:NaN;};
+function parse(text){
+  const lines=text.replace(/\r/g,'').split('\n').filter(l=>l.trim()!=='');
+  if(lines.length<2)throw new Error('Pega al menos una fila de encabezados y una de datos.');
+  const sep=lines[0].includes('\t')?'\t':lines[0].includes(';')?';':',';
+  const comma=sep===';'||sep==='\t';
+  const rows=lines.map(l=>l.split(sep).map(c=>c.trim().replace(/^"|"$/g,'')));
+  const headers=rows[0].map((h,j)=>h||`Col${j+1}`);
+  const body=rows.slice(1).map(r=>headers.map((_,j)=>{const v=r[j]==null?'':r[j];return comma&&/^-?\d+,\d+$/.test(v)?v.replace(',','.'):v;}));
+  return{headers,rows:body};
+}
+function guessRoles(ds){
+  const n=ds.rows.length;
+  return ds.headers.map((h,j)=>{
+    const vals=ds.rows.map(r=>r[j]).filter(v=>v!=='');
+    if(/^(r[eé]plica|rep|repetici[oó]n|bloque|block|lote)s?$/i.test(h))return'blk';
+    const numeric=vals.length&&vals.every(v=>isFinite(num(v)));
+    if(!numeric)return'trt';
+    const distinct=new Set(vals.map(num)).size;
+    return distinct<n&&distinct<=Math.max(5,Math.floor(n/2))?'trt':'resp';
+  });
+}
+function load(ds){
+  data=ds;roles=guessRoles(ds);specs={};last=null;
+  if(ds.preset)Object.entries(ds.preset).forEach(([h,sp])=>{specs[h]=Object.assign({s:1,t:1,w:1},sp);});
+  renderRoles();$('dz-res').classList.remove('show');
+}
+function renderRoles(){
+  const n=data.rows.length;
+  $('dz-roles').innerHTML=`<p class="phint" style="margin-bottom:8px">${n} filas · revisa el papel de cada columna:</p><div class="mwrap"><table class="tbl dz-roles"><tr><th>Columna</th><th>Papel</th><th>Valores</th></tr>${data.headers.map((h,j)=>{
+    const vals=[...new Set(data.rows.map(r=>r[j]))];
+    return`<tr><td>${esc(h)}</td><td><select data-j="${j}">${Object.entries(ROLES).map(([k,t])=>`<option value="${k}" ${roles[j]===k?'selected':''}>${t}</option>`).join('')}</select></td><td class="ns">${esc(vals.slice(0,6).join(', '))}${vals.length>6?' …':''}</td></tr>`;}).join('')}</table></div>`;
+  $('dz-roles').querySelectorAll('select').forEach(s=>s.addEventListener('change',()=>{roles[+s.dataset.j]=s.value;renderSpecs();}));
+  renderSpecs();
+}
+const respCols=()=>roles.map((r,j)=>r==='resp'?j:-1).filter(j=>j>=0);
+function renderSpecs(){
+  const rc=respCols();
+  if(rc.length<2){$('dz-speccard').style.display='';$('dz-spec').innerHTML='';$('dz-msg').innerHTML='<div class="alert aw">⚠️ Marca al menos dos columnas como <b>Respuesta</b>.</div>';return;}
+  $('dz-speccard').style.display='';$('dz-msg').innerHTML='';
+  const v=x=>typeof x==='number'&&isFinite(x)?x:'';
+  $('dz-spec').innerHTML=`<tr><th>Respuesta</th><th>Objetivo</th><th>L (mín. aceptable)</th><th>T (ideal)</th><th>U (máx. aceptable)</th><th>Exp. s (inferior)</th><th>Exp. t (superior)</th><th>Importancia (1–5)</th></tr>`+rc.map(j=>{
+    const h=data.headers[j];const ys=data.rows.map(r=>num(r[j])).filter(isFinite);
+    if(!ys.length)return`<tr><td>${esc(h)}</td><td colspan="7" class="ns">Sin valores numéricos</td></tr>`;
+    const sp=specs[h]||(specs[h]=Dz.defaults('max',ys));const g=sp.goal;
+    return`<tr data-h="${esc(h)}"><td><strong>${esc(h)}</strong><div class="srcnote">obs.: ${f4(Math.min(...ys))} – ${f4(Math.max(...ys))}</div></td>
+      <td><select data-k="goal">${Object.entries(GOALS).map(([k,t])=>`<option value="${k}" ${k===g?'selected':''}>${t}</option>`).join('')}</select></td>
+      <td><input type="number" step="any" data-k="L" value="${v(sp.L)}" ${g==='min'?'disabled':''}></td>
+      <td><input type="number" step="any" data-k="T" value="${v(sp.T)}"></td>
+      <td><input type="number" step="any" data-k="U" value="${v(sp.U)}" ${g==='max'?'disabled':''}></td>
+      <td><input type="number" step="0.1" min="0.1" data-k="s" value="${sp.s}" ${g==='min'?'disabled':''}></td>
+      <td><input type="number" step="0.1" min="0.1" data-k="t" value="${sp.t}" ${g==='max'?'disabled':''}></td>
+      <td><input type="number" step="1" min="1" max="5" data-k="w" value="${sp.w}"></td></tr>`;}).join('');
+  $('dz-spec').querySelectorAll('select,input').forEach(el=>el.addEventListener('change',()=>{
+    const h=el.closest('tr').dataset.h,sp=specs[h],k=el.dataset.k;
+    if(k==='goal'){const j=data.headers.indexOf(h);specs[h]=Object.assign(Dz.defaults(el.value,data.rows.map(r=>num(r[j])).filter(isFinite)),{w:sp.w});renderSpecs();return;}
+    sp[k]=el.value===''?NaN:+el.value;
+  }));
+}
+function calc(){
+  if(!data)return;const rc=respCols();if(rc.length<2){renderSpecs();return;}
+  const names=rc.map(j=>data.headers[j]);const sps=names.map(h=>specs[h]);
+  const bad=names.map((h,i)=>[h,sps[i]?Dz.check(sps[i]):'sin especificación']).filter(x=>x[1]);
+  if(bad.length){$('dz-msg').innerHTML=`<div class="alert aw">⚠️ Revisa: ${bad.map(([h,e])=>`<b>${esc(h)}</b>: ${e}`).join('; ')}.</div>`;return;}
+  $('dz-msg').innerHTML='';
+  const tc=roles.map((r,j)=>r==='trt'?j:-1).filter(j=>j>=0);
+  const groups=new Map();
+  data.rows.forEach((r,i)=>{
+    const key=tc.length?tc.map(j=>r[j]).join(' · '):`Fila ${i+1}`;
+    if(!groups.has(key))groups.set(key,{label:key,levels:tc.map(j=>r[j]),vals:rc.map(()=>[])});
+    rc.forEach((j,k)=>{const v=num(r[j]);if(isFinite(v))groups.get(key).vals[k].push(v);});
+  });
+  const ws=sps.map(s=>s.w);
+  const res=[...groups.values()].map(g=>{
+    const means=g.vals.map(v=>v.length?v.reduce((a,b)=>a+b,0)/v.length:NaN);
+    const sds=g.vals.map(v=>{if(v.length<2)return NaN;const m=v.reduce((a,b)=>a+b,0)/v.length;return Math.sqrt(v.reduce((a,b)=>a+(b-m)**2,0)/(v.length-1));});
+    const d=means.map((y,k)=>Dz.d(y,sps[k]));
+    return{...g,n:Math.max(...g.vals.map(v=>v.length)),means,sds,d,D:Dz.D(d,ws)};
+  }).filter(o=>o.means.every(isFinite)).sort((a,b)=>b.D-a.D);
+  if(!res.length){$('dz-msg').innerHTML='<div class="alert aw">⚠️ Ningún tratamiento tiene valores en todas las respuestas.</div>';return;}
+  last={names,sps,res,tc};
+  const best=res[0],pos=res.filter(o=>o.D>0).length,hasSD=res.some(o=>o.sds.some(isFinite));
+  $('dz-met').innerHTML=`<div class="metric"><div class="mlbl">Tratamientos</div><div class="mval">${res.length}</div></div><div class="metric"><div class="mlbl">Cumplen todo (D &gt; 0)</div><div class="mval">${pos}</div></div><div class="metric"><div class="mlbl">Mejor D</div><div class="mval">${f3(best.D)}</div></div><div class="metric"><div class="mlbl">Mejor tratamiento</div><div class="mval" style="font-size:.95rem">${esc(best.label)}</div></div>`;
+  const th=(tc.length?tc.map(j=>`<th>${esc(data.headers[j])}</th>`).join(''):'<th>Condición</th>')+'<th>n</th>'+names.map(h=>`<th>${esc(h)}${hasSD?' (media ± DE)':''}</th>`).join('')+names.map(h=>`<th>d(${esc(h)})</th>`).join('')+'<th>D</th><th></th>';
+  $('dz-tbl').innerHTML=`<table class="tbl"><tr><th>#</th>${th}</tr>${res.map((o,i)=>`<tr class="${i===0&&o.D>0?'dz-best':''}"><td>${i+1}</td>${(tc.length?o.levels:[o.label]).map(v=>`<td>${esc(v)}</td>`).join('')}<td>${o.n}</td>${o.means.map((m,k)=>`<td>${f4(m)}${isFinite(o.sds[k])?` ± ${f4(o.sds[k])}`:''}</td>`).join('')}${o.d.map(v=>`<td>${f3(v)}</td>`).join('')}<td><strong>${f3(o.D)}</strong></td><td><button class="mini-btn" data-ex="${i}">Ver cálculo</button></td></tr>`).join('')}</table>`;
+  $('dz-tbl').querySelectorAll('[data-ex]').forEach(b=>b.addEventListener('click',()=>explain(res[+b.dataset.ex])));
+  explain(best);drawChart();
+  const al=[];
+  if(!pos)al.push('<div class="alert aw">⚠️ Ningún tratamiento cumple todas las especificaciones (todas las D = 0). Revisa si los límites son realistas o si conviene explorar otras condiciones.</div>');
+  else if(res.length>1&&res[1].D>0&&best.D-res[1].D<0.05)al.push(`<div class="alert aw">⚠️ Los dos mejores tratamientos tienen D muy parecidas (${f3(best.D)} y ${f3(res[1].D)}). Antes de decidir, revisa en ANOVA y Comparación de medias si sus respuestas difieren significativamente, y considera costo o facilidad de operación.</div>`);
+  al.push(`<div class="alert ai">ℹ️ D se calcula con las medias de cada tratamiento y no considera la variabilidad. Si la consistencia importa, agrega la desviación estándar como otra respuesta a minimizar. Si las diferencias entre tratamientos no son significativas para alguna respuesta, su d no debería pesar en la decisión.</div>`);
+  $('dz-alr').innerHTML=al.join('');
+  $('dz-res').classList.add('show');
+}
+function explain(o){
+  const{names,sps}=last;const ws=sps.map(s=>s.w);
+  const dtxt=o.d.some(d=>d<=0)?'Alguna d = 0 → D = 0':ws.every(w=>w===ws[0])?`D = (${o.d.map(f4).join(' × ')})^(1/${o.d.length}) = ${f4(o.D)}`:`D = (${o.d.map((d,i)=>`${f4(d)}^${ws[i]}`).join(' × ')})^(1/${ws.reduce((a,b)=>a+b,0)}) = ${f4(o.D)}`;
+  $('dz-exp').innerHTML=`<div class="ctitle">Cálculo detallado · ${esc(o.label)}</div><ul class="dz-exp">${names.map((h,k)=>{const s=sps[k];return`<li><strong>${esc(h)}</strong> (${GOALS[s.goal].toLowerCase()}${s.goal!=='min'?`, L = ${s.L}`:''}, T = ${s.T}${s.goal!=='max'?`, U = ${s.U}`:''}): ${esc(Dz.explain(o.means[k],s))}</li>`;}).join('')}<li><strong>Global:</strong> ${esc(dtxt)}</li></ul>`;
+}
+function drawChart(){
+  if(!last||typeof Chart==='undefined')return;
+  if(chart)chart.destroy();
+  const r=last.res;const gold=getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()||'#c8a96e';
+  chart=new Chart($('dz-ch').getContext('2d'),{type:'bar',data:{labels:r.map(o=>o.label),datasets:[{label:'D',data:r.map(o=>+o.D.toFixed(4)),backgroundColor:r.map((o,i)=>i===0&&o.D>0?gold:'rgba(120,120,150,.45)')}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{min:0,max:1,grid:{color:cg()},ticks:{color:ct()}},y:{grid:{display:false},ticks:{color:ct()}}}}});
+}
+function csv(){
+  if(!last){alert('Primero calcula la deseabilidad.');return;}
+  const{names,sps,res,tc}=last;const L=[];
+  const cell=v=>{v=typeof v==='number'?(isFinite(v)?String(+v.toPrecision(10)):''):String(v==null?'':v);return/[",\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v;};
+  L.push(['Respuesta','Objetivo','L','T','U','s','t','Importancia']);names.forEach((h,i)=>{const s=sps[i];L.push([h,GOALS[s.goal],s.L,s.T,s.U,s.s,s.t,s.w]);});
+  L.push([]);L.push([...(tc.length?tc.map(j=>data.headers[j]):['Condicion']),'n',...names.map(h=>'media '+h),...names.map(h=>'DE '+h),...names.map(h=>'d '+h),'D']);
+  res.forEach(o=>L.push([...(tc.length?o.levels:[o.label]),o.n,...o.means,...o.sds,...o.d,o.D]));
+  const blob=new Blob(['﻿'+L.map(r=>r.map(cell).join(',')).join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='deseabilidad.csv';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+}
+const EXAMPLE='Temperatura\tHumedad\tRéplica\tIE\tDensidad\n155\t15.5\t1\t2.08\t296.4\n155\t15.5\t2\t2.02\t303.8\n155\t19.5\t1\t1.95\t414.2\n155\t19.5\t2\t1.89\t425.6\n170\t15.5\t1\t1.88\t276.3\n170\t15.5\t2\t1.84\t283.9\n170\t19.5\t1\t1.70\t326.8\n170\t19.5\t2\t1.74\t333.4\n185\t15.5\t1\t1.68\t259.1\n185\t15.5\t2\t1.64\t265.2\n185\t19.5\t1\t1.47\t341.0\n185\t19.5\t2\t1.43\t349.2';
+$('dz-read').addEventListener('click',()=>{try{load(parse($('dz-paste').value));}catch(e){$('dz-roles').innerHTML=`<div class="alert aw">⚠️ ${esc(e.message)}</div>`;}});
+$('dz-ex').addEventListener('click',()=>{$('dz-paste').value=EXAMPLE;const ds=parse(EXAMPLE);ds.preset={IE:{goal:'target',L:1.70,T:1.80,U:1.90},Densidad:{goal:'min',L:NaN,T:270,U:320}};load(ds);calc();});
+$('dz-clear').addEventListener('click',()=>{$('dz-paste').value='';data=null;last=null;$('dz-roles').innerHTML='';$('dz-speccard').style.display='none';$('dz-res').classList.remove('show');});
+$('dz-calc').addEventListener('click',calc);
+$('dz-csv').addEventListener('click',csv);
+$('dz-ftog').addEventListener('click',()=>{$('dz-ftog').classList.toggle('open');$('dz-fcoll').classList.toggle('open');});
+document.querySelector('.thbtn').addEventListener('click',()=>setTimeout(drawChart,50));
+})();
+</script>
+
 </body>
 </html>
