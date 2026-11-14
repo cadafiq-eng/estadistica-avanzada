@@ -43,8 +43,9 @@ header h1{font-family:var(--ff-h);font-size:1.45rem;font-weight:600;}
 .thbtn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:20px;
   padding:5px 13px;font-size:.78rem;font-family:var(--ff-u);font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0;}
 .thbtn:hover{border-color:var(--gold-dim);color:var(--gold);}
-.tab-bar{display:flex;overflow-x:auto;gap:4px;padding:10px 20px 0;border-bottom:1px solid var(--border);background:var(--surface);scrollbar-width:none;}
-.tab-bar::-webkit-scrollbar{display:none;}
+.tab-bar{display:flex;overflow-x:auto;gap:4px;padding:10px 20px 0;border-bottom:1px solid var(--border);background:var(--surface);scrollbar-width:thin;scrollbar-color:var(--border) transparent;scroll-padding-inline:20px;}
+.tab-bar::after{content:'';flex:0 0 12px;}
+.tab-bar::-webkit-scrollbar{height:4px;}.tab-bar::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
 .tab-btn{flex-shrink:0;font-family:var(--ff-u);font-size:.82rem;font-weight:600;letter-spacing:.04em;
   background:none;border:none;color:var(--muted);cursor:pointer;padding:10px 18px;
   border-radius:var(--r) var(--r) 0 0;border-bottom:2px solid transparent;white-space:nowrap;}
@@ -159,7 +160,7 @@ footer a{color:var(--gold-dim);text-decoration:none;}
   <span class="logo">HumAIno®</span>
   <span style="color:var(--border)">│</span>
   <h1>Análisis Estadístico Avanzado</h1>
-  <span class="badge" style="margin-left:auto">v4.3</span>
+  <span class="badge" style="margin-left:auto">v4.3.1</span>
   <button class="thbtn" onclick="toggleTheme()"><span id="thi">☀️</span><span id="thl">Claro</span></button>
 </header>
 
@@ -168,12 +169,12 @@ footer a{color:var(--gold-dim);text-decoration:none;}
   <button class="tab-btn" onclick="swT(1)">📊 ANOVA</button>
   <button class="tab-btn" onclick="swT(2)">🧪 Supuestos</button>
   <button class="tab-btn" onclick="swT(3)">⚖️ Comparación de Medias</button>
-  <button class="tab-btn" onclick="swT(4)">🔗 Correlación</button>
-  <button class="tab-btn" onclick="swT(5)">📈 Regresión</button>
-  <button class="tab-btn" onclick="swT(6)">📉 No Paramétricas</button>
-  <button class="tab-btn" onclick="swT(7)">✖ Chi-cuadrado</button>
-  <button class="tab-btn" onclick="swT(8)">🔢 Tamaño de Muestra</button>
-  <button class="tab-btn" onclick="swT(9)">🎯 Deseabilidad</button>
+  <button class="tab-btn" onclick="swT(4)">🎯 Deseabilidad</button>
+  <button class="tab-btn" onclick="swT(5)">🔗 Correlación</button>
+  <button class="tab-btn" onclick="swT(6)">📈 Regresión</button>
+  <button class="tab-btn" onclick="swT(7)">📉 No Paramétricas</button>
+  <button class="tab-btn" onclick="swT(8)">✖ Chi-cuadrado</button>
+  <button class="tab-btn" onclick="swT(9)">🔢 Tamaño de Muestra</button>
 </div>
 
 <main>
@@ -420,6 +421,43 @@ footer a{color:var(--gold-dim);text-decoration:none;}
   <div id="cm-body"></div>
 </section>
 
+<section class="panel" id="p9">
+  <div class="sh"><h2>Deseabilidad · Varias respuestas</h2><p>Elige la condición que mejor equilibra dos o más respuestas (Derringer y Suich, 1980)</p></div>
+  <div class="ibox"><strong>¿Para qué diseños?</strong> DCA, DBCA y factoriales generales (factores con 2 o más niveles, cuantitativos o categóricos): se promedian las réplicas o bloques de cada tratamiento y se calcula la deseabilidad con esas medias. También sirve para superficie de respuesta, mezclas o Taguchi si pegas los valores predichos por tu modelo o software (una fila por condición). Para factoriales 2<sup>k</sup> con modelo ajustado y puntos centrales usa la app <em>DOE 2ᵏ</em>.</div>
+  <div class="card">
+    <div class="ctitle">1 · Datos</div>
+    <div class="pzone"><textarea id="dz-paste" placeholder="Pega aquí la tabla con encabezados: columnas de tratamiento o factores, bloque/réplica (opcional) y dos o más respuestas"></textarea></div>
+    <p class="phint">Una fila por observación (o por condición). Separadores <code>Tab</code> <code>;</code> <code>,</code>. Con <code>;</code> se aceptan decimales con coma.</p>
+    <div class="flr" style="margin-top:10px">
+      <button class="btn bsm" id="dz-read">↙ Leer datos</button>
+      <button class="btn bsm bgh" id="dz-ex">🎲 Ejemplo: factorial 3 × 2</button>
+      <button class="btn bsm bgh" id="dz-clear">✕</button>
+    </div>
+    <div id="dz-roles" style="margin-top:14px"></div>
+  </div>
+  <div class="card" id="dz-speccard" style="display:none">
+    <div class="ctitle">2 · Especificaciones de cada respuesta</div>
+    <div class="mwrap"><table class="tbl dz-spec" id="dz-spec"></table></div>
+    <button class="ctog" id="dz-ftog" style="margin-top:10px"><span class="arr">▶</span> Fórmulas de la deseabilidad</button>
+    <div class="coll" id="dz-fcoll"><div class="ibox" style="margin:0">
+      <strong>Maximizar:</strong> d = 0 si y ≤ L; d = [(y − L)/(T − L)]<sup>s</sup> si L &lt; y &lt; T; d = 1 si y ≥ T.<br>
+      <strong>Minimizar:</strong> d = 1 si y ≤ T; d = [(U − y)/(U − T)]<sup>t</sup> si T &lt; y &lt; U; d = 0 si y ≥ U.<br>
+      <strong>Valor objetivo:</strong> d = [(y − L)/(T − L)]<sup>s</sup> si L ≤ y ≤ T; d = [(U − y)/(U − T)]<sup>t</sup> si T ≤ y ≤ U; d = 0 fuera de [L, U].<br>
+      <strong>Global:</strong> D = (d₁<sup>w₁</sup> · d₂<sup>w₂</sup> ··· d<sub>m</sub><sup>w<sub>m</sub></sup>)<sup>1/Σw</sup>. Si alguna d = 0, entonces D = 0.<br>
+      Exponente 1: cambio lineal; &gt; 1 más exigente; &lt; 1 más tolerante. Los límites L, T y U deben venir de una especificación, norma o preferencia del consumidor, no de los datos.
+    </div></div>
+    <div style="margin-top:14px"><button class="btn" id="dz-calc">⚡ Calcular deseabilidad</button> <button class="btn bsm bgh" id="dz-csv">⤓ CSV</button></div>
+    <div id="dz-msg"></div>
+  </div>
+  <div id="dz-res" class="rb">
+    <div class="metrics" id="dz-met"></div>
+    <div class="card"><div class="ctitle">3 · Deseabilidad por tratamiento (medias)</div><div class="mwrap" id="dz-tbl"></div></div>
+    <div class="card"><div class="ctitle">Deseabilidad global D</div><div class="de-ch"><canvas id="dz-ch"></canvas></div></div>
+    <div class="card" id="dz-exp"></div>
+    <div id="dz-alr"></div>
+  </div>
+</section>
+
 <section class="panel" id="p1">
   <div class="sh"><h2>Correlación</h2><p>Pearson y Spearman</p></div>
   <div class="g2">
@@ -491,48 +529,11 @@ footer a{color:var(--gold-dim);text-decoration:none;}
   </div>
 </section>
 
-<section class="panel" id="p9">
-  <div class="sh"><h2>Deseabilidad · Varias respuestas</h2><p>Elige la condición que mejor equilibra dos o más respuestas (Derringer y Suich, 1980)</p></div>
-  <div class="ibox"><strong>¿Para qué diseños?</strong> DCA, DBCA y factoriales generales (factores con 2 o más niveles, cuantitativos o categóricos): se promedian las réplicas o bloques de cada tratamiento y se calcula la deseabilidad con esas medias. También sirve para superficie de respuesta, mezclas o Taguchi si pegas los valores predichos por tu modelo o software (una fila por condición). Para factoriales 2<sup>k</sup> con modelo ajustado y puntos centrales usa la app <em>DOE 2ᵏ</em>.</div>
-  <div class="card">
-    <div class="ctitle">1 · Datos</div>
-    <div class="pzone"><textarea id="dz-paste" placeholder="Pega aquí la tabla con encabezados: columnas de tratamiento o factores, bloque/réplica (opcional) y dos o más respuestas"></textarea></div>
-    <p class="phint">Una fila por observación (o por condición). Separadores <code>Tab</code> <code>;</code> <code>,</code>. Con <code>;</code> se aceptan decimales con coma.</p>
-    <div class="flr" style="margin-top:10px">
-      <button class="btn bsm" id="dz-read">↙ Leer datos</button>
-      <button class="btn bsm bgh" id="dz-ex">🎲 Ejemplo: factorial 3 × 2</button>
-      <button class="btn bsm bgh" id="dz-clear">✕</button>
-    </div>
-    <div id="dz-roles" style="margin-top:14px"></div>
-  </div>
-  <div class="card" id="dz-speccard" style="display:none">
-    <div class="ctitle">2 · Especificaciones de cada respuesta</div>
-    <div class="mwrap"><table class="tbl dz-spec" id="dz-spec"></table></div>
-    <button class="ctog" id="dz-ftog" style="margin-top:10px"><span class="arr">▶</span> Fórmulas de la deseabilidad</button>
-    <div class="coll" id="dz-fcoll"><div class="ibox" style="margin:0">
-      <strong>Maximizar:</strong> d = 0 si y ≤ L; d = [(y − L)/(T − L)]<sup>s</sup> si L &lt; y &lt; T; d = 1 si y ≥ T.<br>
-      <strong>Minimizar:</strong> d = 1 si y ≤ T; d = [(U − y)/(U − T)]<sup>t</sup> si T &lt; y &lt; U; d = 0 si y ≥ U.<br>
-      <strong>Valor objetivo:</strong> d = [(y − L)/(T − L)]<sup>s</sup> si L ≤ y ≤ T; d = [(U − y)/(U − T)]<sup>t</sup> si T ≤ y ≤ U; d = 0 fuera de [L, U].<br>
-      <strong>Global:</strong> D = (d₁<sup>w₁</sup> · d₂<sup>w₂</sup> ··· d<sub>m</sub><sup>w<sub>m</sub></sup>)<sup>1/Σw</sup>. Si alguna d = 0, entonces D = 0.<br>
-      Exponente 1: cambio lineal; &gt; 1 más exigente; &lt; 1 más tolerante. Los límites L, T y U deben venir de una especificación, norma o preferencia del consumidor, no de los datos.
-    </div></div>
-    <div style="margin-top:14px"><button class="btn" id="dz-calc">⚡ Calcular deseabilidad</button> <button class="btn bsm bgh" id="dz-csv">⤓ CSV</button></div>
-    <div id="dz-msg"></div>
-  </div>
-  <div id="dz-res" class="rb">
-    <div class="metrics" id="dz-met"></div>
-    <div class="card"><div class="ctitle">3 · Deseabilidad por tratamiento (medias)</div><div class="mwrap" id="dz-tbl"></div></div>
-    <div class="card"><div class="ctitle">Deseabilidad global D</div><div class="de-ch"><canvas id="dz-ch"></canvas></div></div>
-    <div class="card" id="dz-exp"></div>
-    <div id="dz-alr"></div>
-  </div>
-</section>
-
 </main>
 <footer>
   <div style="max-width:700px;margin:0 auto;">
     <p style="font-size:.95rem;font-weight:700;color:var(--gold);font-family:var(--ff-h);letter-spacing:.06em;margin-bottom:6px">
-      Análisis Estadístico Avanzado · v4.3
+      Análisis Estadístico Avanzado · v4.3.1
     </p>
     <p style="margin-bottom:10px">
       <span style="color:var(--text)">© 2025 <strong>Dr. Luis Antonio Chel-Guerrero</strong></span><br>
@@ -579,7 +580,7 @@ const ct=()=>isDark?'#666880':'#9a9080';
 
 /* ══ NAVIGATION ══════════════════════════════════════════════════ */
 const panels=document.querySelectorAll('.panel'),tabBtns=document.querySelectorAll('.tab-btn');
-function swT(i){panels.forEach((p,j)=>p.classList.toggle('active',j===i));tabBtns.forEach((b,j)=>b.classList.toggle('active',j===i));if(i===2)renderSupuestos();if(i===3)renderComparacionMedias();}
+function swT(i){panels.forEach((p,j)=>p.classList.toggle('active',j===i));tabBtns.forEach((b,j)=>b.classList.toggle('active',j===i));if(tabBtns[i]&&tabBtns[i].scrollIntoView)tabBtns[i].scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'});if(i===2)renderSupuestos();if(i===3)renderComparacionMedias();}
 function swAN(w){['dca','dbca','fdca','fdbca'].forEach(id=>{document.getElementById('an-'+id).classList.toggle('active',id===w);document.getElementById('ab-'+id).classList.toggle('active',id===w);});}
 function swDE(w){['dca','dbca','fact','cl'].forEach(id=>{document.getElementById('de-'+id).style.display=id===w?'':'none';document.getElementById('de-b-'+id).classList.toggle('active',id===w);});}
 
